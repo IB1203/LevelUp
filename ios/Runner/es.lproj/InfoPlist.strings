@@ -1,0 +1,6 @@
+"NSCameraUsageDescription" = "Level Up usa la cámara para hacer tus fotos de progreso.";
+"NSPhotoLibraryUsageDescription" = "Level Up abre tu galería para elegir fotos de progreso, vídeos de ejercicios y fondos.";
+"NSPhotoLibraryAddUsageDescription" = "Level Up guarda en tu galería las tarjetas que compartes.";
+"NSHealthShareUsageDescription" = "Level Up lee tus pasos, sueño y datos del corazón de Salud para mostrarlos junto a tu entrenamiento.";
+"NSHealthUpdateUsageDescription" = "Level Up guarda tus entrenos terminados en Salud.";
+"Start workout" = "Empezar entreno";

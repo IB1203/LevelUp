@@ -1,0 +1,180 @@
+C:\automation\GymMane   this is the project for reference
+
+and change the name of the app as Level Up you are to refer GymMane and implement in Level UP
+
+i want all the features from this repo in my hunter_system based fitness app all 500 exercise their animation of the excercise,
+dashboard UI 
+another words means - take all from that application covert it to solo leveling (quest, daily quest bonus quest, hunter level, dungeon quest, 
+
+
+GymMane is an offline, privacy-first Android strength-training and nutrition logger—not a gym-management app. It already covers a strong core: body-map-driven workout selection, set/rep logging, rest timers, progression, analytics, exercise library, nutrition, body metrics, journaling, and local data ownership.
+
+What GymMane already has
+Domain	Existing capabilities
+Domain	Existing capabilities
+Gym training	Interactive front/back body map, session generation, set-by-set logging, warm-up/working/drop-set/failure/rest-pause/cluster sets, RPE or RIR, supersets, plates-per-side calculation, rest timer with custom alarm, reboot-safe live session. 
+Programming	Routines, weekly plans, rotations, rest days that preserve streaks, per-exercise progression rules, deload weeks, light sessions, exercise-progression suggestions when an exercise becomes easy. 
+Exercise library	500+ exercises with animations and instructions, filtering by muscle/equipment/level, custom exercises, custom media, “Places” that filters exercises by available equipment. 
+Progress analytics	Volume, streaks, weekly goals, PRs by rep range, estimated 1RM, strength curves, strength-per-bodyweight, activity heatmap, 30-day muscle split, monthly recap. 
+Body tracking	Bodyweight, 10 body measurements, progress photos, Health Connect metrics such as steps, sleep, heart rate, blood oxygen, breathing rate, blood pressure, temperature, distance, floors, elevation, and active calories. 
+Nutrition	Calories/macros against goals, separate rest-day targets, 500+ foods, custom foods/dishes, water, protein shakes, supplements with dose/stock, meal plans, meal prep, weekly summaries, intermittent fasting. 
+Data and privacy	CSV export, full ZIP backup, imports from Hevy/Strong/Lyfta/FitNotes/openGym, Strava export, Health Connect integration, no account/ads/analytics/internet permission, local media storage, one-tap deletion. 
+Engagement	Levels, medals, shareable workout sticker, widgets, training journal with photos/videos, six calculators, calendar journal. 
+
+Anime-craze lens
+The app should turn consistency into a “power-up arc,” without turning training into shallow gamification.
+
+Character build system: avatar evolves with training consistency, PRs, volume milestones, and recovery—not merely calories burned.
+
+Quest system: daily/weekly quests such as “hit leg volume target,” “complete 3 RIR sets,” “log sleep,” or “train a neglected muscle.”
+
+Boss battles: benchmark challenges such as first bodyweight pull-up, 100 kg squat, 5 km run, or a 12-week transformation arc.
+
+Guild/party mode: optional private groups for friends, training partners, or coaches; shared challenges and leaderboard privacy controls.
+
+Story-driven onboarding: let users choose an archetype—hypertrophy, powerlifting, endurance, fat loss, mobility—and receive a narrative training path.
+
+Achievements with meaning: reward adherence, technique consistency, progressive overload, sleep, and recovery; avoid rewarding reckless ego lifting.
+
+Custom anime-style visuals: muscle-map progress, skill trees for movement patterns, and “level-up” moments when a user earns a PR or completes a mesocycle.
+
+Game-developer lens
+GymMane’s offline-first architecture is a major advantage, but a future version should preserve that while adding optional connected features.
+
+Local-first sync: device database as source of truth, with optional end-to-end encrypted cloud backup and conflict resolution.
+
+Offline-first UX: every core action—logging a set, editing a routine, viewing history—must work without internet.
+
+Event-driven progression engine: rules such as “if 3×8 achieved twice, offer next progression,” already present in GymMane, should be extensible with user-defined rules.
+
+Modular plugin system: nutrition, wearables, coaching, video analysis, and social features should be optional modules rather than mandatory dependencies.
+
+Fast gym-floor interactions: one-thumb logging, large tap targets, swipe-to-complete-set, quick weight/rep adjustment, voice logging, and instant rest-timer control.
+
+Performance and battery: background timers must be reliable during screen lock, workouts should cache locally, and media should compress intelligently.
+
+Crash-safe session state: a workout must never be lost after app kill, reboot, or battery exhaustion—GymMane already supports this and it should remain a non-negotiable requirement.
+
+Data integrity: versioned schema migrations, export/import validation, checksums for backups, and undo/redo for destructive edits.
+
+System-architect lens
+Local-first data model: SQLite or equivalent on-device store with normalized entities for users, routines, sessions, exercises, sets, body metrics, foods, meals, media, and goals.
+
+Optional cloud layer: account optional; sync must be opt-in, encrypted, and exportable. This preserves GymMane’s “no account, no ads, no analytics” philosophy while enabling multi-device use.
+
+Offline media pipeline: compressed photos/videos, thumbnails, deduplication, storage quotas, and user-controlled deletion.
+
+Health-platform integration: Health Connect as a standardized read/write bridge; Strava export as a separate, explicit integration.
+
+Wearables and sensors: heart-rate, HRV, sleep, steps, SpO2, temperature, and blood-pressure ingestion should be normalized into a common biometrics model.
+
+Security and privacy: biometric app lock, encrypted local database option, granular permissions, audit log for exports, no third-party trackers, and clear data-deletion guarantees.
+
+Scalable analytics: compute aggregates locally—volume, e1RM, fatigue, adherence, muscle balance—rather than sending raw workout data to a server.
+
+Extensibility: import/export APIs, CSV schema documentation, webhook-free automation options, and an open plugin interface for coaches or researchers.
+
+Solo Leveling fan lens
+Think of the user as the “hunter,” training as the “dungeon,” and progress as the “level-up system.”
+
+Daily system quests: train, eat protein target, sleep 7+ hours, hydrate, and log bodyweight.
+
+Rank progression: E-rank beginner to S-rank athlete, based on consistency, strength standards, conditioning, mobility, and recovery—not appearance alone.
+
+Skill tree: unlock “Push,” “Pull,” “Squat,” “Hinge,” “Carry,” “Conditioning,” “Mobility,” and “Recovery” branches.
+
+Shadow-army metaphor: track weak points as “shadows to recruit”—for example, undertrained rear delts, hamstrings, grip, or core.
+
+Gate events: periodic challenges such as a 4-week hypertrophy block, a strength peak, a fat-loss cut, or a conditioning dungeon.
+
+Penalty system with compassion: missed sessions create a “mana depletion” state, but the app offers a minimum viable workout rather than punishing the user.
+
+Solo mode and raid mode: solo training for focus; optional partner raids for shared accountability and friendly competition.
+
+Fitness-freak lens
+Training split templates: push/pull/legs, upper/lower, full-body, PHUL, PHAT, conjugate, powerbuilding, bodybuilding, calisthenics, and hybrid templates.
+
+Advanced set types: drop sets, rest-pause, cluster sets, myo-reps, supersets, giant sets, tempo work, partials, lengthened-bias work, and AMRAP finishing sets.
+
+Autoregulation: RPE/RIR-based load adjustment, readiness check-ins, fatigue flags, and automatic deload prompts.
+
+Plate math: bar weight, plate inventory, plates per side, percentage-based loading, and metric/imperial conversion.
+
+Cardio and conditioning: intervals, Zone 2, HIIT, rucking, cycling, rowing, swimming, and sport sessions.
+
+Mobility and warm-ups: joint-by-joint warm-up routines, corrective drills, and prehabilitation templates.
+
+Recovery dashboard: sleep, soreness, resting heart rate, HRV, stress, hydration, steps, and training monotony.
+
+Video form library: angle-specific demonstrations, common-error cues, regression/progression chains, and equipment alternatives.
+
+Gym-expert lens
+Exercise prescription: primary/secondary muscles, movement pattern, equipment, difficulty, contraindications, and coaching cues.
+
+Progressive overload engine: double progression, linear progression, percentage-based progression, rep-range progression, and auto-regulated progression.
+
+Mesocycle planning: accumulation, intensification, deload, peak, and transition phases.
+
+Muscle-balance analysis: identify chronic gaps across push/pull, quad/hamstring, horizontal/vertical, and left/right sides.
+
+Fatigue management: acute versus chronic workload, volume landmarks, performance decay, and readiness-based adjustments.
+
+Exercise substitution: alternatives based on equipment, injury, joint comfort, skill level, and training goal.
+
+Coach collaboration: shareable program templates, athlete dashboards, check-ins, and feedback loops—while keeping personal data private by default.
+
+Gym-floor mode: high-contrast UI, offline access, minimal taps, quick exercise swap, and no distracting social feed.
+
+Nutritionist-expert lens
+Goal-based targets: calories, protein, carbs, fat, fiber, water, sodium, and micronutrients where reliable.
+
+Adaptive targets: training-day versus rest-day intake, refeed/deficit phases, and goal-based adjustments.
+
+Food database quality: verified foods, branded products, restaurant items, recipes, custom meals, and portion controls.
+
+Meal planning: weekly plans, batch cooking, leftovers, grocery lists, favorites, repeat meals, and macro-balanced swaps.
+
+Supplement tracking: dose, timing, stock, interactions, and reminders—without making medical claims.
+
+Behavioral tools: meal-photo logging, quick-add templates, hunger/satiety notes, and adherence trends.
+
+Special dietary support: vegetarian, vegan, Jain, halal, kosher, gluten-free, lactose-free, and allergen filtering.
+
+India-specific value: regional foods, home-cooked recipes, portion estimation for roti/rice/dal/curry, and metric units.
+
+Physician / sports-medicine lens
+This is not a substitute for medical care, but the app should promote safe, sustainable training.
+
+Health screening: optional PAR-Q+ style readiness questions, medical conditions, medications, injuries, pregnancy status where relevant, and clinician contact.
+
+Red-flag education: chest pain, fainting, severe shortness of breath, sudden weakness, new neurological symptoms, or unexplained swelling should prompt urgent medical care—not a workout suggestion.
+
+Injury and pain tracking: body map for pain, severity, aggravating movements, rehab notes, clinician advice, and return-to-training guidance.
+
+Load management: gradual progression, warning when volume/intensity rises too quickly, and deload recommendations.
+
+Recovery monitoring: sleep, resting heart rate, HRV, soreness, mood, and performance trends.
+
+Medication and condition awareness: general cautions for conditions such as uncontrolled hypertension, diabetes, cardiac disease, or pregnancy, with a clear instruction to consult a qualified clinician.
+
+Eating-disorder safeguards: avoid promoting extreme restriction; provide healthy minimum-energy guidance, discourage obsessive weighing, and offer help resources when relevant.
+
+Privacy by design: sensitive health data should remain local unless the user explicitly enables encrypted sync.
+
+Highest-impact feature backlog
+Priority	Feature	Why it matters
+P0	Offline-first logging, rest timer, routine execution, backup/export	Core reliability and user trust. 
+P0	Progression engine and PR/e1RM analytics	Makes training measurable and progressive. 
+P0	Nutrition logging with protein, calories, macros, and meal templates	Supports body-composition and performance goals. 
+P1	Body-map fatigue and muscle-balance insights	Helps users train intelligently, not just hard. 
+P1	Recovery dashboard using sleep, HRV, resting HR, soreness, and readiness	Enables autoregulation and injury-risk reduction. 
+P1	Injury/pain journal and return-to-training workflow	Adds a meaningful health-and-safety layer.
+P2	Private coach/group mode with encrypted sharing	Enables accountability without sacrificing privacy.
+P2	Wearable integration and adaptive programming	Personalizes training based on recovery and performance. 
+P2	AI coach with transparent, evidence-based recommendations	Useful only if grounded in user data, safety rules, and editable plans.
+P3	Anime-style gamification layer	Improves retention if it reinforces consistency rather than vanity metrics.
+Product positioning
+The strongest version of GymMane would be a privacy-first, offline-capable “training operating system”: a gym-floor-fast logger at its core, an intelligent programming and recovery layer above it, and optional gamified/social/coach layers around it. Its existing strengths—local data ownership, no ads/tracking, robust set logging, progression logic, and broad nutrition/body tracking—already give it an unusually solid foundation.
+
+The key differentiator should not be “more features,” but a system that helps a user answer four questions every day: What should I train? How hard should I push? Am I recovering? Is my plan actually moving me toward my goal?----based on this i want u to update hunter system app to professional app.
+
