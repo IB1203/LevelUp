@@ -831,7 +831,7 @@ class _NavBar extends StatefulWidget {
 
 class _NavBarState extends State<_NavBar> {
   static const height = 68.0;
-  static const _iw = 46.0;
+  static const _maxIw = 46.0;
   static const _fabW = 38.0;
   static const _routes = ['home', 'training', 'system', 'progress', 'settings'];
 
@@ -840,6 +840,10 @@ class _NavBarState extends State<_NavBar> {
   int? _pressed;
   double _slotW = 0;
   double _gap = 0;
+
+  /// Navigation slots shrink below 46 dp on very narrow phones so five tabs and
+  /// the play button always fit without clipping.
+  double get _iw => ((_slotW - _fabW) / 5).clamp(0.0, _maxIw);
 
   int get _selectedIndex {
     if (_hover != null) return _hover!;
@@ -1024,18 +1028,21 @@ class _NavBarState extends State<_NavBar> {
                   // The bar is a fixed 68 px tall: the caption stays at its drawn
                   // size and the full name is announced through Semantics above.
                   ExcludeSemantics(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      softWrap: false,
-                      overflow: TextOverflow.visible,
-                      textScaler: TextScaler.noScaling,
-                      style: AppTheme.f(
-                        9.5,
-                        weight: FontWeight.w700,
-                        color: Color.lerp(gc.textSecondary, gc.accent, v),
-                        height: 1,
-                      ).copyWith(decoration: TextDecoration.none),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                        textScaler: TextScaler.noScaling,
+                        style: AppTheme.f(
+                          9.5,
+                          weight: FontWeight.w700,
+                          color: Color.lerp(gc.textSecondary, gc.accent, v),
+                          height: 1,
+                        ).copyWith(decoration: TextDecoration.none),
+                      ),
                     ),
                   ),
                 ],

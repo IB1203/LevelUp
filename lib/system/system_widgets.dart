@@ -77,14 +77,18 @@ extension HunterPaletteX on BuildContext {
 class Sx {
   const Sx._();
 
-  static TextStyle disp(double size, {Color? color, FontWeight weight = FontWeight.w800, double spacing = 0}) =>
-      AppTheme.f(
-        size,
-        weight: size >= 20 ? FontWeight.w800 : weight,
-        color: color,
-        letterSpacing: spacing > 1 ? 0.6 : spacing * 0.5,
-        height: 1.15,
-      );
+  static TextStyle disp(
+    double size, {
+    Color? color,
+    FontWeight weight = FontWeight.w800,
+    double spacing = 0,
+  }) => AppTheme.f(
+    size,
+    weight: size >= 20 ? FontWeight.w800 : weight,
+    color: color,
+    letterSpacing: spacing > 1 ? 0.6 : spacing * 0.5,
+    height: 1.15,
+  );
 }
 
 /// A soft Hunter System card. [title] renders as a small section label with an
@@ -298,11 +302,276 @@ class SystemChip extends StatelessWidget {
     final color = this.color ?? context.sx.mana;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(100)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(100),
+      ),
       child: Text(
         titleCase(text),
         style: AppTheme.f(11.5, weight: FontWeight.w700, color: color),
       ),
+    );
+  }
+}
+
+/// A compact gold XP reward label. Used on quest cards, weekly missions and
+/// reward rows so every XP figure in the System reads the same.
+class XpPill extends StatelessWidget {
+  const XpPill({super.key, required this.xp, this.label = 'XP', this.dense = false, this.muted = false});
+
+  final int xp;
+  final String label;
+  final bool dense;
+
+  /// Dims the pill for closed or completed quests without hiding the reward.
+  final bool muted;
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = muted ? context.gc.textSecondary : context.sx.gold;
+    return Container(
+      height: dense ? 22 : 26,
+      padding: EdgeInsets.symmetric(horizontal: dense ? 7 : 9),
+      decoration: BoxDecoration(
+        color: gold.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: gold.withValues(alpha: 0.26)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(PhosphorIconsFill.lightning, size: dense ? 10 : 12, color: gold),
+          const SizedBox(width: 3),
+          Text(
+            '+$xp $label',
+            style: AppTheme.f(dense ? 11 : 12.5, weight: FontWeight.w800, color: gold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A status pill with an optional glyph. Colours stay in the Hunter palette;
+/// only the meaning changes between quest, weekly and profile states.
+class StatusChip extends StatelessWidget {
+  const StatusChip({super.key, required this.label, required this.color, this.icon, this.dense = false});
+
+  final String label;
+  final Color color;
+  final IconData? icon;
+  final bool dense;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: dense ? 21 : 25,
+      padding: EdgeInsets.symmetric(horizontal: dense ? 7 : 9),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[Icon(icon, size: dense ? 10 : 11.5, color: color), const SizedBox(width: 4)],
+          Text(
+            label,
+            maxLines: 1,
+            style: AppTheme.f(dense ? 10 : 10.8, weight: FontWeight.w800, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A quiet metadata chip (duration, attribute reward, unit).
+class MetaChip extends StatelessWidget {
+  const MetaChip({super.key, required this.label, this.icon, this.color});
+
+  final String label;
+  final IconData? icon;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    final tone = color ?? gc.textSecondary;
+    return Container(
+      height: 22,
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      decoration: BoxDecoration(
+        color: gc.bgRaised2.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[Icon(icon, size: 10.5, color: tone), const SizedBox(width: 4)],
+          Text(
+            label,
+            style: AppTheme.f(10.8, weight: FontWeight.w700, color: tone),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A responsive profile statistic. Label above value, glyph at the leading
+/// edge: the same cell works at 120 dp and at 320 dp.
+class HunterStatTile extends StatelessWidget {
+  const HunterStatTile({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.color,
+    this.hint,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color? color;
+  final String? hint;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    final tone = color ?? context.sx.mana;
+    return Semantics(
+      container: true,
+      label: '$label: $value${hint == null ? '' : '. $hint'}',
+      excludeSemantics: true,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 64),
+        padding: const EdgeInsets.all(11),
+        decoration: BoxDecoration(
+          color: gc.bgRaised2.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: gc.border.withValues(alpha: 0.7)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 31,
+              height: 31,
+              decoration: BoxDecoration(
+                color: tone.withValues(alpha: 0.13),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 15, color: tone),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      style: AppTheme.f(18, weight: FontWeight.w800, color: gc.text, letterSpacing: -0.2),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    label.toUpperCase(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.f(
+                      9.2,
+                      weight: FontWeight.w700,
+                      color: gc.textTertiary,
+                      letterSpacing: 0.7,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Section header with an optional count and text action, used by the quest
+/// board and the profile.
+class HunterSectionHeader extends StatelessWidget {
+  const HunterSectionHeader({
+    super.key,
+    required this.title,
+    this.count,
+    this.actionLabel,
+    this.onAction,
+    this.accent,
+    this.countColor,
+  });
+
+  final String title;
+  final String? count;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final Color? accent;
+  final Color? countColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final gc = context.gc;
+    return Row(
+      children: [
+        if (accent != null) ...[
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+        ],
+        Flexible(
+          child: Text(
+            title.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: kickerStyle(gc, color: accent ?? gc.textTertiary),
+          ),
+        ),
+        if (count != null) ...[
+          const SizedBox(width: 7),
+          Text(
+            count!,
+            style: AppTheme.f(11, weight: FontWeight.w800, color: countColor ?? gc.textTertiary),
+          ),
+        ],
+        const Spacer(),
+        if (actionLabel != null && onAction != null)
+          Pressable(
+            onTap: onAction,
+            scale: 0.94,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 40),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    actionLabel!,
+                    style: AppTheme.f(12, weight: FontWeight.w700, color: context.sx.mana),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(PhosphorIconsBold.caretRight, size: 11, color: context.sx.mana),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -419,7 +688,10 @@ class ParticleBurst extends StatefulWidget {
 }
 
 class _ParticleBurstState extends State<ParticleBurst> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  );
   final _rand = math.Random();
   late final List<(double, double, double)> _p = [
     for (var i = 0; i < widget.count; i++)

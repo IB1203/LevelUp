@@ -321,8 +321,8 @@ class GhostButton extends StatelessWidget {
     return Pressable(
       onTap: onTap,
       child: Container(
-        height: 46,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        constraints: const BoxConstraints(minHeight: 46),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: context.gc.bgRaised2,
@@ -333,8 +333,11 @@ class GhostButton extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: gc.ember),
             const SizedBox(width: 8),
-            Text(titleCase(label),
-                style: AppTheme.f(13.5, weight: FontWeight.w700, color: gc.text)),
+            Flexible(
+              child: Text(titleCase(label),
+                  textAlign: TextAlign.center,
+                  style: AppTheme.f(13.5, weight: FontWeight.w700, color: gc.text)),
+            ),
           ],
         ),
       ),

@@ -1295,8 +1295,11 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             ),
           ),
           const SizedBox(width: 10),
-          Text(fit.nextTargetLabel(id)!,
-              style: AppTheme.f(20, weight: FontWeight.w800, color: up ? gc.ember : gc.text)),
+          Flexible(
+            child: Text(fit.nextTargetLabel(id)!,
+                textAlign: TextAlign.end,
+                style: AppTheme.f(20, weight: FontWeight.w800, color: up ? gc.ember : gc.text)),
+          ),
         ],
       ),
     );
@@ -1420,7 +1423,11 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               child: Text(t.exerciseTypeLabel,
                   style: AppTheme.f(14.5, weight: FontWeight.w500, color: gc.text)),
             ),
-            Text(_modeName(mode), style: AppTheme.f(13, weight: FontWeight.w600, color: gc.textSecondary)),
+            Flexible(
+              child: Text(_modeName(mode),
+                  textAlign: TextAlign.end,
+                  style: AppTheme.f(13, weight: FontWeight.w600, color: gc.textSecondary)),
+            ),
             const SizedBox(width: 6),
             Icon(PhosphorIconsRegular.caretRight, size: 15, color: gc.textTertiary),
           ],

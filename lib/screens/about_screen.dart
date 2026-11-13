@@ -74,7 +74,7 @@ class AboutScreen extends StatelessWidget {
 
   Widget _hero(GymColors gc) {
     return Container(
-      height: 178,
+      constraints: const BoxConstraints(minHeight: 178),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: gc.bgRaised,

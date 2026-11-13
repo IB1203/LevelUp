@@ -37,8 +37,8 @@ class ToolsScreen extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 1.12 / scale,
-              children: [for (final tool in kToolMeta) _card(gc, tool, scale)],
+              childAspectRatio: 1.0 / scale,
+              children: [for (final tool in kToolMeta) _card(gc, tool)],
             ),
           ],
         ),
@@ -46,7 +46,7 @@ class ToolsScreen extends StatelessWidget {
     );
   }
 
-  Widget _card(GymColors gc, ToolMeta tool, double scale) {
+  Widget _card(GymColors gc, ToolMeta tool) {
     return Pressable(
       onTap: () => fit.openTool(tool.id),
       scale: 0.96,
@@ -58,23 +58,24 @@ class ToolsScreen extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            ToolArt(tool.id),
-            const Spacer(),
+            Expanded(
+              child: Align(
+                alignment: AlignmentDirectional.topStart,
+                child: FittedBox(fit: BoxFit.scaleDown, child: ToolArt(tool.id)),
+              ),
+            ),
+            const SizedBox(height: 8),
             Text(t.toolName(tool.id),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTheme.f(14.5, weight: FontWeight.w700, color: gc.text)),
             const SizedBox(height: 2),
-            SizedBox(
-              height: 31 * scale,
-              child: Text(t.toolDesc(tool.id),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTheme.f(11.5,
-                      weight: FontWeight.w500, color: gc.textSecondary, height: 1.3)),
-            ),
+            Text(t.toolDesc(tool.id),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.f(11.5,
+                    weight: FontWeight.w500, color: gc.textSecondary, height: 1.3)),
           ],
         ),
       ),

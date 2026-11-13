@@ -147,7 +147,7 @@ class NoteCalendar extends StatelessWidget {
         onTap: () => onPick(day),
         onLongPress: () => onHold(day),
         child: Container(
-          height: 46,
+          constraints: const BoxConstraints(minHeight: 46),
           margin: const EdgeInsets.all(1.5),
           decoration: BoxDecoration(
             color: on ? gc.emberSoft : Colors.transparent,
@@ -155,6 +155,7 @@ class NoteCalendar extends StatelessWidget {
             border: Border.all(color: on ? gc.ember : Colors.transparent),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('${day.day}',

@@ -160,7 +160,8 @@ class _TimelineScreenState extends State<TimelineScreen> {
               onTap: onTap,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                height: 40,
+                constraints: const BoxConstraints(minHeight: 40),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                 decoration: BoxDecoration(
                   color: on ? gc.ember : Colors.transparent,
                   borderRadius: BorderRadius.circular(100),
@@ -170,9 +171,12 @@ class _TimelineScreenState extends State<TimelineScreen> {
                   children: [
                     Icon(icon, size: 15, color: on ? gc.onEmber : gc.textSecondary),
                     const SizedBox(width: 7),
-                    Text(label,
-                        style: AppTheme.s(13,
-                            weight: FontWeight.w600, color: on ? gc.onEmber : gc.textSecondary)),
+                    Flexible(
+                      child: Text(label,
+                          textAlign: TextAlign.center,
+                          style: AppTheme.s(13,
+                              weight: FontWeight.w600, color: on ? gc.onEmber : gc.textSecondary)),
+                    ),
                   ],
                 ),
               ),
@@ -187,11 +191,14 @@ class _TimelineScreenState extends State<TimelineScreen> {
         border: Border.all(color: gc.border),
         borderRadius: BorderRadius.circular(100),
       ),
-      child: Row(
-        children: [
-          tab(t.timelinePhotos, PhosphorIconsRegular.image, !body, () => fit.setBodyTimeline(false)),
-          tab(t.timelineBody, PhosphorIconsRegular.person, body, () => fit.setBodyTimeline(true)),
-        ],
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            tab(t.timelinePhotos, PhosphorIconsRegular.image, !body, () => fit.setBodyTimeline(false)),
+            tab(t.timelineBody, PhosphorIconsRegular.person, body, () => fit.setBodyTimeline(true)),
+          ],
+        ),
       ),
     );
   }

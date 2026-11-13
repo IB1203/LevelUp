@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../catalog/awards.dart';
+import '../catalog/medal_look.dart';
 import '../l10n/l10n.dart';
 import '../state/fit_state.dart';
+import '../system/system_widgets.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'glass.dart';
@@ -10,45 +13,92 @@ import 'medal.dart';
 import 'ui_kit.dart';
 
 class MedalShelf extends StatelessWidget {
-  const MedalShelf({super.key, this.size = 66});
+  const MedalShelf({super.key, this.size = 54, this.max = 6});
 
   final double size;
+  final int max;
 
   @override
   Widget build(BuildContext context) {
+    final gc = context.gc;
     final order = fit.profileMedals;
+
+    if (fit.awardCount == 0) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            SizedBox(
+              width: size,
+              height: size,
+              child: Medal(id: AwardId.firstStep, size: size, locked: true),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'No medals yet',
+                    style: AppTheme.f(13.5, weight: FontWeight.w800, color: gc.text),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Complete your first workout to start your trophy case.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.s(11.5, color: gc.textTertiary, height: 1.3),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final shown = order.take(max).toList();
+    final item = size + 10;
     return SizedBox(
-      height: size + 32,
-      child: LayoutBuilder(builder: (context, box) {
-        final wide = order.length * (size + 12) + (order.length - 1) * 12;
-        if (wide <= box.maxWidth) {
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [for (final id in order) _slot(context, id)],
+      height: size + 44,
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final needed = shown.length * item + (shown.length - 1) * 8;
+          if (needed <= box.maxWidth) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [for (final id in shown) _slot(context, id)],
+            );
+          }
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            itemCount: shown.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (_, i) => _slot(context, shown[i]),
           );
-        }
-        return ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: order.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 12),
-          itemBuilder: (_, i) => _slot(context, order[i]),
-        );
-      }),
+        },
+      ),
     );
   }
 
   Widget _slot(BuildContext context, AwardId id) {
+    final gc = context.gc;
+    final sx = context.sx;
     final won = fit.hasAward(id);
     final fresh = fit.unseenAwards.contains(id);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => showMedalSheet(context, id),
-      child: Semantics(
-        button: true,
-        label: awardName(id),
+    final rarity = medalRarity(id);
+    final rarityTone = _rarityTone(rarity, sx);
+    return Semantics(
+      button: true,
+      label: '${awardName(id)}. ${won ? 'Unlocked' : 'Locked'}. $rarity rarity.',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => showMedalSheet(context, id),
         child: SizedBox(
-          width: size + 12,
+          width: size + 10,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -56,41 +106,84 @@ class MedalShelf extends StatelessWidget {
                 width: size,
                 height: size,
                 child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     Medal(id: id, size: size, locked: !won),
+                    if (!won)
+                      Positioned(
+                        right: -1,
+                        bottom: -1,
+                        child: Container(
+                          width: 17,
+                          height: 17,
+                          decoration: BoxDecoration(
+                            color: gc.bgRaised,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: gc.border),
+                          ),
+                          child: Icon(PhosphorIconsRegular.lockSimple, size: 9, color: gc.textTertiary),
+                        ),
+                      ),
                     if (fresh)
                       Positioned(
-                        right: 2,
-                        top: 2,
+                        right: 1,
+                        top: 1,
                         child: Container(
                           width: 9,
                           height: 9,
-                          decoration:
-                              BoxDecoration(color: context.gc.accent, shape: BoxShape.circle),
+                          decoration: BoxDecoration(color: gc.accent, shape: BoxShape.circle),
                         ),
                       ),
                   ],
                 ),
               ),
-              if (won) ...[
-                const SizedBox(height: 7),
-                Flexible(
-                  child: Text(
-                    awardName(id),
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTheme.f(9.5,
-                        weight: FontWeight.w600, color: context.gc.textSecondary, height: 1.15),
+              const SizedBox(height: 5),
+              SizedBox(
+                height: 24,
+                child: Text(
+                  awardName(id),
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTheme.f(
+                    8.8,
+                    weight: FontWeight.w700,
+                    color: won ? gc.textSecondary : gc.textTertiary,
+                    height: 1.2,
                   ),
                 ),
-              ],
+              ),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(color: rarityTone, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    rarity,
+                    maxLines: 1,
+                    style: AppTheme.f(7.6, weight: FontWeight.w700, color: rarityTone, letterSpacing: 0.2),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
   }
+
+  Color _rarityTone(String rarity, HunterPalette sx) => switch (rarity) {
+    'Bronze' => Color.lerp(sx.gold, sx.mana, 0.55)!,
+    'Silver' => sx.muted,
+    'Gold' => sx.gold,
+    'Diamond' => sx.holo,
+    _ => sx.muted,
+  };
 }
 
 Future<void> showMedalSheet(BuildContext context, AwardId id) {
@@ -122,22 +215,31 @@ class _MedalSheet extends StatelessWidget {
           const SheetHandle(margin: EdgeInsets.only(bottom: 22)),
           MedalSpin(id: id, size: 236, locked: !won),
           const SizedBox(height: 8),
-          Text(t.awardSpinHint,
-              style: AppTheme.f(11.5, weight: FontWeight.w500, color: gc.textTertiary)),
+          Text(
+            t.awardSpinHint,
+            style: AppTheme.f(11.5, weight: FontWeight.w500, color: gc.textTertiary),
+          ),
           const SizedBox(height: 22),
-          Text(awardName(id), textAlign: TextAlign.center, style: AppTheme.f(21, color: gc.text)),
+          Text(
+            awardName(id),
+            textAlign: TextAlign.center,
+            style: AppTheme.f(21, color: gc.text),
+          ),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22),
-            child: Text(awardLine(id),
-                textAlign: TextAlign.center,
-                style: AppTheme.f(13,
-                    weight: FontWeight.w500, color: gc.textSecondary, height: 1.45)),
+            child: Text(
+              awardLine(id),
+              textAlign: TextAlign.center,
+              style: AppTheme.f(13, weight: FontWeight.w500, color: gc.textSecondary, height: 1.45),
+            ),
           ),
           const SizedBox(height: 18),
           if (won && at != null)
-            Text(t.awardWonOn(t.shortDateYear(at)),
-                style: AppTheme.f(12.5, weight: FontWeight.w600, color: gc.textTertiary))
+            Text(
+              t.awardWonOn(t.shortDateYear(at)),
+              style: AppTheme.f(12.5, weight: FontWeight.w600, color: gc.textTertiary),
+            )
           else
             _progress(gc),
         ],
@@ -163,8 +265,10 @@ class _MedalSheet extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Text('${medalShort(value)} / ${medalShort(goal)}',
-            style: AppTheme.f(12.5, weight: FontWeight.w600, color: gc.textTertiary)),
+        Text(
+          '${medalShort(value)} / ${medalShort(goal)}',
+          style: AppTheme.f(12.5, weight: FontWeight.w600, color: gc.textTertiary),
+        ),
       ],
     );
   }

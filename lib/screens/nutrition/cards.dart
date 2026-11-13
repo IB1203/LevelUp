@@ -26,15 +26,18 @@ class _HeroCard extends StatelessWidget {
         );
     Widget macro(IconData icon, String label, double value, int goal, Color color) => Expanded(
           child: Column(children: [
-            Ltr(child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                RollingText('${value.round()}', style: AppTheme.f(15, weight: FontWeight.w800, color: gc.text)),
-                Text('/${goal}g', style: AppTheme.f(12, weight: FontWeight.w600, color: gc.textSecondary)),
-              ],
-            )),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Ltr(child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  RollingText('${value.round()}', style: AppTheme.f(15, weight: FontWeight.w800, color: gc.text)),
+                  Text('/${goal}g', style: AppTheme.f(12, weight: FontWeight.w600, color: gc.textSecondary)),
+                ],
+              )),
+            ),
             const SizedBox(height: 7),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),

@@ -28,14 +28,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(find.byType(HunterRegistrationScreen), findsOneWidget);
-    expect(find.byIcon(Icons.arrow_back), findsNothing);
+    expect(find.byTooltip('Back'), findsNothing);
     await tester.tap(find.byType(PrimaryButton));
     await tester.pumpAndSettle();
     expect(find.text('Hunter name'), findsOneWidget);
-    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.arrow_back));
+    expect(find.byTooltip('Back'), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.arrow_back), findsNothing);
+    expect(find.byTooltip('Back'), findsNothing);
     fit.onboarded = true;
     fit.persistNow();
   });

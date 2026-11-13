@@ -1329,8 +1329,6 @@ class _MuscleMapCardState extends State<_MuscleMapCard> {
           ),
           const SizedBox(height: 16),
           Row(children: [
-            Text(t.heatLow, style: AppTheme.s(11, color: gc.textTertiary)),
-            const SizedBox(width: 8),
             for (int i = 0; i <= heatLevels; i++) ...[
               if (i > 0) const SizedBox(width: 3),
               Expanded(
@@ -1343,8 +1341,15 @@ class _MuscleMapCardState extends State<_MuscleMapCard> {
                 ),
               ),
             ],
+          ]),
+          const SizedBox(height: 6),
+          Row(children: [
+            Flexible(child: Text(t.heatLow, style: AppTheme.s(11, color: gc.textTertiary))),
             const SizedBox(width: 8),
-            Text(t.heatHigh, style: AppTheme.s(11, color: gc.textTertiary)),
+            Flexible(
+              child: Text(t.heatHigh,
+                  textAlign: TextAlign.end, style: AppTheme.s(11, color: gc.textTertiary)),
+            ),
           ]),
           const SizedBox(height: 14),
           Container(
@@ -1792,34 +1797,42 @@ class _StrengthCard extends StatelessWidget {
       Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          RichText(
-            text: TextSpan(
-              text: fit.weightValue(last),
-              style: AppTheme.d(34, weight: FontWeight.w800, color: gc.text),
-              children: [
-                TextSpan(
-                    text: ' ${fit.units}',
-                    style: AppTheme.d(15, weight: FontWeight.w700, color: gc.textSecondary)),
-              ],
-            ),
-          ),
-          const Spacer(),
-          if (delta.abs() >= 0.1)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                    color: up ? gc.sageSoft : gc.accentSoft, borderRadius: BorderRadius.circular(100)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(up ? PhosphorIconsBold.trendUp : PhosphorIconsBold.trendDown,
-                      size: 12, color: up ? gc.sage : gc.accent),
-                  const SizedBox(width: 4),
-                  Text('${up ? '+' : ''}${fit.weightLabel(delta)}',
-                      style: AppTheme.s(11.5, weight: FontWeight.w700, color: up ? gc.sage : gc.accent)),
-                ]),
+          Flexible(
+            child: RichText(
+              text: TextSpan(
+                text: fit.weightValue(last),
+                style: AppTheme.d(34, weight: FontWeight.w800, color: gc.text),
+                children: [
+                  TextSpan(
+                      text: ' ${fit.units}',
+                      style: AppTheme.d(15, weight: FontWeight.w700, color: gc.textSecondary)),
+                ],
               ),
             ),
+          ),
+          if (delta.abs() >= 0.1) ...[
+            const SizedBox(width: 12),
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                      color: up ? gc.sageSoft : gc.accentSoft, borderRadius: BorderRadius.circular(100)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(up ? PhosphorIconsBold.trendUp : PhosphorIconsBold.trendDown,
+                        size: 12, color: up ? gc.sage : gc.accent),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text('${up ? '+' : ''}${fit.weightLabel(delta)}',
+                          style: AppTheme.s(11.5,
+                              weight: FontWeight.w700, color: up ? gc.sage : gc.accent)),
+                    ),
+                  ]),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
       if (fit.relativeStrength(id) case final rel?) ...[
@@ -1831,14 +1844,22 @@ class _StrengthCard extends StatelessWidget {
       const SizedBox(height: 8),
       Row(
         children: [
-          Text(t.shortDate(recent.first.date),
-              style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
-          const Spacer(),
-          Text(t.sessionCount(series.length),
-              style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
-          const Spacer(),
-          Text(t.shortDate(recent.last.date),
-              style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
+          Flexible(
+            child: Text(t.shortDate(recent.first.date),
+                style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(t.sessionCount(series.length),
+                textAlign: TextAlign.center,
+                style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(t.shortDate(recent.last.date),
+                textAlign: TextAlign.end,
+                style: AppTheme.s(11, weight: FontWeight.w600, color: gc.textTertiary)),
+          ),
         ],
       ),
     ];

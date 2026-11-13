@@ -11,6 +11,7 @@ import '../widgets/ui_kit.dart';
 import 'hunter_catalog.dart';
 import 'hunter_engine.dart';
 import 'hunter_models.dart';
+import 'quest_board.dart';
 import 'system_screen.dart';
 import 'system_sheets.dart';
 import 'system_widgets.dart';
@@ -78,7 +79,10 @@ class HunterHome extends StatelessWidget {
                   top: 6,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                    decoration: BoxDecoration(color: context.sx.alert, borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(
+                      color: context.sx.alert,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: Text(
                       '${s.unreadNotes > 99 ? '99+' : s.unreadNotes}',
                       style: AppTheme.f(10.5, weight: FontWeight.w800, color: Colors.white),
@@ -129,7 +133,6 @@ class HunterHome extends StatelessWidget {
   List<Widget> _registered(BuildContext context, HunterStatus s) {
     final gc = context.gc;
     final board = s.todayQuests;
-    final done = board.where((q) => q.done).length;
     final path = hunterClassById(hunter.player?.classId);
     return [
       if (s.comebackDue) ...[
@@ -160,8 +163,14 @@ class HunterHome extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => hunter.answerWeeklyProposal(false), child: const Text('Keep it')),
-                  TextButton(onPressed: () => hunter.answerWeeklyProposal(true), child: const Text('Approve')),
+                  TextButton(
+                    onPressed: () => hunter.answerWeeklyProposal(false),
+                    child: const Text('Keep it'),
+                  ),
+                  TextButton(
+                    onPressed: () => hunter.answerWeeklyProposal(true),
+                    child: const Text('Approve'),
+                  ),
                 ],
               ),
             ],
@@ -194,75 +203,22 @@ class HunterHome extends StatelessWidget {
         const TodayWorkoutCard(),
       ],
       const SizedBox(height: 18),
-      Row(
-        children: [
-          const Expanded(child: SectionLabel('Daily quests')),
-          Text(
-            '$done/${board.length} complete',
-            style: AppTheme.s(12.5, color: done == board.length ? context.sx.vital : gc.textSecondary),
-          ),
-        ],
-      ),
-      const SizedBox(height: 8),
-      if (s.readiness.low)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            'Readiness is low today: the System lowered quest difficulty.',
-            style: AppTheme.s(12.5, color: context.sx.gold),
-          ),
-        )
-      else if (!s.readiness.logged)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Semantics(
-            container: true,
-            button: true,
-            label: 'Do a 10-second check-in so quests match how you feel today',
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => showCheckInSheet(context),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 48),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Do a 10-second check-in so quests match how you feel today ›',
-                    style: AppTheme.s(12.5, color: context.sx.mana),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+      QuestBoardHeader(quests: board, readiness: s.readiness, onCheckIn: () => showCheckInSheet(context)),
+      const SizedBox(height: 10),
       if (board.isEmpty)
-        SystemWindow(
-          child: Text(
-            'No quests on the board right now. They refresh at the start of each day.',
-            style: AppTheme.s(13.5, color: gc.textSecondary),
-          ),
-        ),
-      for (final q in board) ...[QuestCard(q), const SizedBox(height: 8)],
+        QuestEmptyState(onCheckIn: () => showCheckInSheet(context))
+      else
+        for (final q in board) ...[QuestCard(q), const SizedBox(height: 9)],
       if (s.weekly.isNotEmpty) ...[
         const SizedBox(height: 10),
-        Row(
-          children: [
-            const Expanded(child: SectionLabel('Weekly quests')),
-            Semantics(
-              button: true,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => SystemScreen.open(1),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text('All quests ›', style: AppTheme.s(12.5, color: context.sx.mana)),
-                ),
-              ),
-            ),
-          ],
+        HunterSectionHeader(
+          title: 'Weekly quests',
+          accent: context.sx.gold,
+          actionLabel: 'All quests',
+          onAction: () => SystemScreen.open(1),
         ),
-        const SizedBox(height: 4),
-        for (final m in s.weekly) ...[WeeklyCard(m), const SizedBox(height: 8)],
+        const SizedBox(height: 6),
+        for (final m in s.weekly) ...[WeeklyCard(m), const SizedBox(height: 9)],
       ],
     ];
   }
@@ -291,8 +247,14 @@ class HunterHome extends StatelessWidget {
                       style: Sx.disp(19, color: gc.text),
                     ),
                     Text(
-                      [if (s.currentTitle != null) '«${s.currentTitle!.name}»', '${s.rank.letter}-Rank'].join(' · '),
-                      style: AppTheme.s(12.5, color: s.currentTitle != null ? context.sx.gold : gc.textSecondary),
+                      [
+                        if (s.currentTitle != null) '«${s.currentTitle!.name}»',
+                        '${s.rank.letter}-Rank',
+                      ].join(' · '),
+                      style: AppTheme.s(
+                        12.5,
+                        color: s.currentTitle != null ? context.sx.gold : gc.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     SystemBar(value: s.levelRatio, height: 6),
@@ -332,7 +294,10 @@ class HunterHome extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(a.short, style: Sx.disp(12, color: gc.textSecondary, spacing: 1.2)),
-                            Text('${s.attrs[a]!.level}', style: Sx.disp(20, color: context.sx.violet, spacing: 0)),
+                            Text(
+                              '${s.attrs[a]!.level}',
+                              style: Sx.disp(20, color: context.sx.violet, spacing: 0),
+                            ),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 6),
                               child: SystemBar(value: s.attrs[a]!.ratio, height: 3, color: context.sx.violet),
@@ -351,7 +316,14 @@ class HunterHome extends StatelessWidget {
               Expanded(child: _mini(context, 'Workouts', '${s.workouts}')),
               Expanded(child: _mini(context, 'Quests', '${s.questsDone}')),
               Expanded(child: _mini(context, 'Streak', '${s.streak}d')),
-              Expanded(child: _mini(context, 'SP', '${s.skillPoints}', color: s.skillPoints > 0 ? context.sx.gold : null)),
+              Expanded(
+                child: _mini(
+                  context,
+                  'SP',
+                  '${s.skillPoints}',
+                  color: s.skillPoints > 0 ? context.sx.gold : null,
+                ),
+              ),
             ],
           ),
         ],

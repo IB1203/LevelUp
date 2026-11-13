@@ -22,6 +22,7 @@ import 'package:level_up/system/hunter_home.dart';
 import 'package:level_up/system/hunter_models.dart';
 import 'package:level_up/system/system_screen.dart';
 import 'package:level_up/system/system_sheets.dart';
+import 'package:level_up/widgets/profile_avatar.dart';
 import 'package:level_up/widgets/ui_kit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,7 +43,8 @@ void main() {
   setUpAll(() async {
     if (!_on) return;
     await _font('Nunito', [
-      for (final w in ['Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold', 'Black']) 'assets/fonts/Nunito-$w.ttf',
+      for (final w in ['Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold', 'Black'])
+        'assets/fonts/Nunito-$w.ttf',
     ]);
     for (final (family, file) in [
       ('PhosphorRegular', 'Phosphor'),
@@ -69,6 +71,15 @@ void main() {
     setAppLanguage('en');
   });
 
+  Future<void> warmImages(WidgetTester tester) async {
+    final ctx = tester.element(find.byType(LevelUpApp));
+    await tester.runAsync(() async {
+      await precacheImage(kDefaultBanner, ctx);
+      await precacheImage(ProfileAvatar.defaultPhoto, ctx);
+    });
+    await tester.pump();
+  }
+
   Future<void> shot(WidgetTester tester, String name) async {
     for (var i = 0; i < 25; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -89,6 +100,7 @@ void main() {
     addTearDown(tester.view.reset);
     fit.onboarded = false;
     await tester.pumpWidget(RepaintBoundary(child: const LevelUpApp()));
+    await warmImages(tester);
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -116,13 +128,18 @@ void main() {
     p['created'] = DateTime(n.year, n.month, n.day - 20).toIso8601String();
     fit.hunterData['player'] = p;
     for (final d in [1, 2, 4, 6, 8, 9, 12]) {
-      fit.sessions.add(LoggedSession(DateTime(n.year, n.month, n.day - d, 18), 45 * 60, [
-        LoggedExercise('EIeI8Vf', 'Barbell Bench Press', 'chest', [for (var i = 0; i < 4; i++) LoggedSet(8, 60.0 + d)]),
-      ]));
+      fit.sessions.add(
+        LoggedSession(DateTime(n.year, n.month, n.day - d, 18), 45 * 60, [
+          LoggedExercise('EIeI8Vf', 'Barbell Bench Press', 'chest', [
+            for (var i = 0; i < 4; i++) LoggedSet(8, 60.0 + d),
+          ]),
+        ]),
+      );
     }
     hunter.invalidate();
 
     await tester.pumpWidget(RepaintBoundary(child: const LevelUpApp()));
+    await warmImages(tester);
     await shot(tester, '01-home');
     fit.goTrain();
     await shot(tester, '02-train');
@@ -202,7 +219,10 @@ void main() {
     fit.trainContinue();
     await shot(tester, '11-review-picks');
     if (fit.sessionPicks.isEmpty) {
-      fit.sessionPicks.addAll(['EIeI8Vf', for (final e in fit.allExercises.where((e) => e.primary == 'chest').skip(1).take(2)) e.id]);
+      fit.sessionPicks.addAll([
+        'EIeI8Vf',
+        for (final e in fit.allExercises.where((e) => e.primary == 'chest').skip(1).take(2)) e.id,
+      ]);
     }
     fit.startSession();
     await tester.pump(const Duration(milliseconds: 300));

@@ -66,9 +66,13 @@ class RoutinesScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 22),
-            Row(children: [
-              Expanded(
-                child: AnimatedSwitcher(
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   transitionBuilder: (child, a) => FadeTransition(
                     opacity: CurvedAnimation(parent: a, curve: const Interval(0.45, 1)),
@@ -85,18 +89,17 @@ class RoutinesScreen extends StatelessWidget {
                         style: _label(gc)),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              SegToggle(
-                [
-                  SegOption(t.planFixedWeek, !fit.rotation, () => fit.setRotation(false)),
-                  SegOption(t.planRotation, fit.rotation, () => fit.setRotation(true)),
-                ],
-                hPad: 10,
-                vPad: 5,
-                fontSize: 11,
-              ),
-            ]),
+                SegToggle(
+                  [
+                    SegOption(t.planFixedWeek, !fit.rotation, () => fit.setRotation(false)),
+                    SegOption(t.planRotation, fit.rotation, () => fit.setRotation(true)),
+                  ],
+                  hPad: 10,
+                  vPad: 5,
+                  fontSize: 11,
+                ),
+              ],
+            ),
             const SizedBox(height: 10),
             AnimatedSize(
               duration: const Duration(milliseconds: 380),

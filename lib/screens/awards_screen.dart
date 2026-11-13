@@ -150,13 +150,14 @@ class _AwardsScreenState extends State<AwardsScreen> {
   }
 
   Widget _grid(BuildContext context, List<AwardId> ids, int rise) {
+    final scale = MediaQuery.textScalerOf(context).scale(1);
     return SliverGrid.builder(
       itemCount: ids.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        childAspectRatio: 1.02,
+        childAspectRatio: 0.92 / scale,
       ),
       itemBuilder: (_, i) => Rise(index: rise, child: _card(context, ids[i])),
     );
@@ -193,7 +194,12 @@ class _AwardsScreenState extends State<AwardsScreen> {
                 child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Medal(id: id, size: 74, locked: !won),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Medal(id: id, size: 74, locked: !won),
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   Text(
                     awardName(id),

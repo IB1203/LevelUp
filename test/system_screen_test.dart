@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:level_up/app/level_up_app.dart';
 import 'package:level_up/l10n/l10n.dart';
 import 'package:level_up/models/workout.dart';
+import 'package:level_up/screens/profile_screen.dart';
 import 'package:level_up/services/local_store.dart';
 import 'package:level_up/services/progress_reminder.dart';
 import 'package:level_up/services/train_reminder.dart';
@@ -46,7 +47,9 @@ void main() {
     await settle(tester, 6);
   }
 
-  testWidgets('a new user registers through the Hunter System and lands on the hunter dashboard', (tester) async {
+  testWidgets('a new user registers through the Hunter System and lands on the hunter dashboard', (
+    tester,
+  ) async {
     setAppLanguage('en');
     await tester.binding.setSurfaceSize(const Size(360, 780));
     fit.onboarded = false;
@@ -96,10 +99,14 @@ void main() {
     );
     final now = DateTime.now();
     for (var i = 0; i < 6; i++) {
-      fit.sessions.add(LoggedSession(DateTime(now.year, now.month, now.day, 6 + i * 2), 1800, [
-        LoggedExercise('EIeI8Vf', 'Barbell Bench Press', 'chest', [for (var k = 0; k < 4; k++) LoggedSet(8, 60.0 + i)]),
-        LoggedExercise('plank-hold', 'Plank', 'abdomen', [LoggedSet(0, 0, sec: 40 + i)]),
-      ], routineId: 'r$i'));
+      fit.sessions.add(
+        LoggedSession(DateTime(now.year, now.month, now.day, 6 + i * 2), 1800, [
+          LoggedExercise('EIeI8Vf', 'Barbell Bench Press', 'chest', [
+            for (var k = 0; k < 4; k++) LoggedSet(8, 60.0 + i),
+          ]),
+          LoggedExercise('plank-hold', 'Plank', 'abdomen', [LoggedSet(0, 0, sec: 40 + i)]),
+        ], routineId: 'r$i'),
+      );
     }
     hunter.logCheckIn(energy: 4, soreness: 2, stress: 2, pain: false, sleep: 7.5);
     hunter.addInjury('hamstrings', 5, 'tight');
@@ -140,6 +147,91 @@ void main() {
     await tester.binding.setSurfaceSize(null);
   });
 
+  testWidgets('the profile header holds its layout on a narrow screen with large text', (tester) async {
+    setAppLanguage('en');
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    fit.onboarded = true;
+    hunter.register(
+      name: 'A Very Long Hunter Name',
+      experience: 2,
+      classId: 'strength',
+      minutes: 45,
+      weeklyTarget: 4,
+      limitations: const [],
+      screening: List.filled(kScreeningQuestions.length, false),
+    );
+    fit.setProfileHandle('a.very.long.handle.name');
+    final now = DateTime.now();
+    for (var i = 0; i < 5; i++) {
+      fit.sessions.add(
+        LoggedSession(DateTime(now.year, now.month, now.day - i, 18), 2700, [
+          LoggedExercise('EIeI8Vf', 'Barbell Bench Press', 'chest', [
+            for (var k = 0; k < 4; k++) LoggedSet(8, 60.0 + i),
+          ]),
+        ]),
+      );
+    }
+    hunter.invalidate();
+    fit.goSettings();
+    await tester.pumpWidget(const LevelUpApp());
+    await settle(tester, 20);
+
+    expect(find.byType(ProfileScreen), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'profile header at 2x text');
+    for (var i = 0; i < 10; i++) {
+      await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 40));
+    }
+    expect(tester.takeException(), isNull, reason: 'profile body at 2x text');
+
+    // Same header with the Hunter System switched off (no rank, "This year" tile).
+    fit.gamification = false;
+    fit.resetRoute('home');
+    fit.goSettings();
+    await settle(tester, 12);
+    expect(find.byType(ProfileScreen), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'profile without gamification');
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('the daily quest board holds its layout on a narrow screen with large text', (tester) async {
+    setAppLanguage('en');
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    fit.onboarded = true;
+    hunter.register(
+      name: 'A Very Long Hunter Name',
+      experience: 2,
+      classId: 'strength',
+      minutes: 45,
+      weeklyTarget: 4,
+      limitations: const [],
+      screening: List.filled(kScreeningQuestions.length, false),
+    );
+    hunter.invalidate();
+    SystemScreen.initialTab = 1;
+    fit.resetRoute('home');
+    fit.pushRoute('system');
+    await tester.pumpWidget(const LevelUpApp());
+    await settle(tester, 14);
+
+    expect(find.byType(SystemScreen), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'quest board header at 2x text');
+    for (var i = 0; i < 12; i++) {
+      await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 40));
+    }
+    expect(tester.takeException(), isNull, reason: 'quest cards at 2x text');
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.binding.setSurfaceSize(null);
+  });
+
   testWidgets('Log it on a protein quest closes the sheet and opens Nutrition', (tester) async {
     setAppLanguage('en');
     await tester.binding.setSurfaceSize(const Size(400, 860));
@@ -160,8 +252,20 @@ void main() {
     fit.hunterData['quests'] = {
       ...(fit.hunterData['quests'] as Map),
       id: {
-        'id': id, 'day': day, 'cat': 'discipline', 'n': 'Protein Ration', 'd': 'Reach your protein target',
-        'diff': 'D', 'obj': [], 'xp': 15, 'ax': {}, 'min': 0, 'st': 'offered', 'chk': 'protein', 'tg': 126, 'u': 'g',
+        'id': id,
+        'day': day,
+        'cat': 'discipline',
+        'n': 'Protein Ration',
+        'd': 'Reach your protein target',
+        'diff': 'D',
+        'obj': [],
+        'xp': 15,
+        'ax': {},
+        'min': 0,
+        'st': 'offered',
+        'chk': 'protein',
+        'tg': 126,
+        'u': 'g',
       },
     };
     hunter.invalidate();

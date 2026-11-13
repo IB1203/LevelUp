@@ -160,20 +160,28 @@ class GymPassEmpty extends StatelessWidget {
           painter: _DashedCard(gc.text.withValues(alpha: 0.18)),
           child: Padding(
             padding: const EdgeInsets.all(22),
-            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(color: gc.text.withValues(alpha: 0.09), shape: BoxShape.circle),
-                child: Icon(PhosphorIconsRegular.qrCode, size: 22, color: gc.text),
+            child: LayoutBuilder(
+              builder: (context, box) => FittedBox(
+                fit: BoxFit.scaleDown,
+                child: SizedBox(
+                  width: box.maxWidth,
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(color: gc.text.withValues(alpha: 0.09), shape: BoxShape.circle),
+                      child: Icon(PhosphorIconsRegular.qrCode, size: 22, color: gc.text),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(t.gymPassAdd, style: AppTheme.f(15, weight: FontWeight.w800, color: gc.text)),
+                    const SizedBox(height: 4),
+                    Text(t.gymPassEmpty,
+                        textAlign: TextAlign.center,
+                        style: AppTheme.f(12.5, weight: FontWeight.w500, color: gc.textSecondary, height: 1.35)),
+                  ]),
+                ),
               ),
-              const SizedBox(height: 14),
-              Text(t.gymPassAdd, style: AppTheme.f(15, weight: FontWeight.w800, color: gc.text)),
-              const SizedBox(height: 4),
-              Text(t.gymPassEmpty,
-                  textAlign: TextAlign.center,
-                  style: AppTheme.f(12.5, weight: FontWeight.w500, color: gc.textSecondary, height: 1.35)),
-            ]),
+            ),
           ),
         ),
       ),

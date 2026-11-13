@@ -31,6 +31,17 @@ class MedalLook {
   final int? gem;
 }
 
+/// Human rarity of a medal, derived from the metal it is struck in. Used for
+/// the subtle rarity dot on the profile shelf.
+String medalRarity(AwardId id) {
+  final base = medalLook(id).metal.base;
+  if (base == _bronze.base) return 'Bronze';
+  if (base == _silver.base) return 'Silver';
+  if (base == _gold.base) return 'Gold';
+  if (base == _diamond.base) return 'Diamond';
+  return 'Common';
+}
+
 MedalLook medalLook(AwardId id) => switch (id) {
       AwardId.firstStep => const MedalLook(PhosphorIconsFill.flag, _bronze),
       AwardId.firstWorkout => const MedalLook(PhosphorIconsFill.barbell, _bronze, round: true),
