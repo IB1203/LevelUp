@@ -69,7 +69,10 @@ class ExerciseMedia extends StatelessWidget {
           path,
           key: ValueKey(media),
           fit: BoxFit.contain,
-          errorBuilder: (_, _, _) => _fallbackIcon(context, height),
+          // The attached photo is gone (e.g. a backup restored without media):
+          // show the built-in demonstration, not a generic icon.
+          errorBuilder: (_, _, _) => ExerciseArt(
+              slug: ex.art, icon: sportIcon(ex.id), height: height, radius: radius, live: live, bordered: false, loops: loops),
         ),
       ),
     );

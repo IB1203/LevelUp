@@ -43,6 +43,10 @@ class QuestGenerator {
   final Set<String> recentMuscles;
   final math.Random _rand;
 
+  /// The path chosen at registration. It shapes the session mix, the
+  /// category quest and the weekly mission wording.
+  HunterClass get _path => hunterClassById(player.classId);
+
   String get dayId => '${day.year}${day.month.toString().padLeft(2, '0')}${day.day.toString().padLeft(2, '0')}';
 
   String get difficulty {
@@ -54,15 +58,30 @@ class QuestGenerator {
 
   int get _diffIdx => rankIndex(difficulty).clamp(0, 4);
 
-  ({int sets, int reps, int hold}) get _volume => const [
-    (sets: 2, reps: 8, hold: 20),
-    (sets: 2, reps: 10, hold: 30),
-    (sets: 3, reps: 10, hold: 40),
-    (sets: 3, reps: 12, hold: 50),
-    (sets: 4, reps: 10, hold: 60),
-  ][_diffIdx];
+  ({int sets, int reps, int hold}) get _volume {
+    final base = const [
+      (sets: 2, reps: 8, hold: 20),
+      (sets: 2, reps: 10, hold: 30),
+      (sets: 3, reps: 10, hold: 40),
+      (sets: 3, reps: 12, hold: 50),
+      (sets: 4, reps: 10, hold: 60),
+    ][_diffIdx];
+    return switch (_path.id) {
+      'hypertrophy' => (sets: math.min(base.sets + 1, 5), reps: base.reps, hold: base.hold),
+      'strength' => (sets: base.sets, reps: math.max(5, base.reps - 2), hold: base.hold),
+      'endurance' || 'fatloss' => (sets: math.max(2, base.sets - 1), reps: base.reps + 2, hold: base.hold),
+      _ => base,
+    };
+  }
 
-  int get _cardioMinutes => const [10, 15, 20, 25, 30][_diffIdx];
+  int get _cardioMinutes {
+    final base = const [10, 15, 20, 25, 30][_diffIdx];
+    return switch (_path.id) {
+      'endurance' => base + 10,
+      'fatloss' => base + 5,
+      _ => base,
+    };
+  }
 
   Set<String> get _allowedDifficulty => switch (_diffIdx) {
     0 || 1 => {'Beginner'},
@@ -101,7 +120,8 @@ class QuestGenerator {
         out.add(e);
         continue;
       }
-      if (_isStretch(e) || _isCardio(e)) continue;
+      // Sports (dance, football, …) are logged by time; they never fill a strength slot.
+      if (_isStretch(e) || _isCardio(e) || fit.kindOf(e) == 'sport') continue;
       if (!muscles.contains(e.primary) || avoid.contains(e.primary)) continue;
       if (e.secondary.any(avoid.contains) && avoid.isNotEmpty) continue;
       if (!_allowedDifficulty.contains(e.difficulty)) continue;
@@ -128,7 +148,13 @@ class QuestGenerator {
     final mode = fit.modeOf(e.id);
     final timed = mode == 'time' || mode == 'cardio' || spec.slot == Slot.cardio || spec.slot == Slot.stretch;
     if (timed) {
-      return QuestObjective(e.id, exerciseName(e), spec.sets, seconds: spec.seconds ?? 30);
+      final secs = spec.seconds ?? 30;
+      // Conditioning moves (burpees, mountain climbers, jumping jacks…) are not
+      // done for a quarter of an hour straight: the same slot becomes intervals.
+      if (spec.slot == Slot.cardio && secs > 120 && kCardioExtras.contains(e.id)) {
+        return QuestObjective(e.id, exerciseName(e), (secs ~/ 120).clamp(4, 10), seconds: 40);
+      }
+      return QuestObjective(e.id, exerciseName(e), spec.sets, seconds: secs);
     }
     return QuestObjective(e.id, exerciseName(e), spec.sets, reps: spec.reps ?? 10);
   }
@@ -162,7 +188,13 @@ class QuestGenerator {
 
   List<Slot> get _rotation {
     // Rest muscles trained in the last day or two; lead with the others.
-    final base = [Slot.legs, Slot.push, Slot.pull, Slot.core, Slot.hinge];
+    final base = switch (_path.id) {
+      'hypertrophy' => [Slot.push, Slot.pull, Slot.legs, Slot.hinge, Slot.core],
+      'strength' => [Slot.legs, Slot.hinge, Slot.push, Slot.pull, Slot.core],
+      'endurance' || 'fatloss' => [Slot.cardio, Slot.legs, Slot.push, Slot.pull, Slot.core],
+      'mobility' => [Slot.stretch, Slot.core, Slot.legs, Slot.pull, Slot.push],
+      _ => [Slot.legs, Slot.push, Slot.pull, Slot.core, Slot.hinge],
+    };
     bool recent(Slot s) => switch (s) {
       Slot.push => recentMuscles.any(const {'chest', 'shoulders', 'triceps'}.contains),
       Slot.pull => recentMuscles.any(const {'back', 'biceps'}.contains),
@@ -261,7 +293,7 @@ class QuestGenerator {
     } else {
       final n = (minutes ~/ 8).clamp(2, 6);
       final order = [..._rotation];
-      if (minutes >= 30) order.insert(0, Slot.cardio);
+      if (minutes >= 30 && !order.contains(Slot.cardio)) order.insert(0, Slot.cardio);
       final objs = _session(order, n);
       if (learned.contains('cooldown') || learned.contains('core_dev')) {
         final extra = learned.contains('cooldown') ? Slot.stretch : Slot.core;
@@ -271,11 +303,20 @@ class QuestGenerator {
           ]).where((o) => objs.every((x) => x.exerciseId != o.exerciseId)),
         );
       }
+      final name = switch (_path.id) {
+        'hypertrophy' => 'Volume Assault',
+        'strength' => 'Heavy Triad',
+        'endurance' => 'Ranger Patrol',
+        'fatloss' => 'Shadow Circuit',
+        'mobility' => 'Monk Flow',
+        _ => minutes <= 15 ? 'Basic Training' : 'Daily Training',
+      };
       quests.add(
         _quest(
           QuestCategory.main,
-          minutes <= 15 ? 'Basic Training' : 'Daily Training',
-          'Your main mission for today, sized to $minutes minutes and your experience.',
+          name,
+          'Your main mission for today, built for the ${_path.name} path '
+              '(${_path.focus.toLowerCase()}) and sized to $minutes minutes.',
           objs,
           20 + minutes,
           _attrsFor(objs),
@@ -284,30 +325,45 @@ class QuestGenerator {
     }
 
     // Side quest: 5–10 minutes, always short.
-    final side = _session([..._rotation.reversed], 2, setsOverride: 2);
+    // On a rest or low-readiness day it is two gentle stretches, not more load.
+    final side = recovering
+        ? fromSlots([
+            SlotSpec(Slot.stretch, 1, seconds: _volume.hold),
+            SlotSpec(Slot.stretch, 1, seconds: _volume.hold),
+          ])
+        : _session([..._rotation.reversed], 2, setsOverride: 2);
     quests.add(
       _quest(
         QuestCategory.side,
-        'Quick Drill',
-        'A short extra. Five to ten minutes still counts.',
+        recovering ? 'Loosen Up' : 'Quick Drill',
+        recovering
+            ? 'Two easy stretches. Optional, and never into pain.'
+            : 'A short extra. Five to ten minutes still counts.',
         side,
         20,
         _attrsFor(side, consistency: 5),
       ),
     );
 
-    // Category quest: rotate, leaning towards the weakest attribute.
+    // Category quest: rotate, leaning towards the path and the weakest attribute.
     final pool = <QuestCategory>[
       if (!recovering) QuestCategory.strength,
       QuestCategory.endurance,
       QuestCategory.mobility,
     ];
+    QuestCategory? pathCat() => switch (_path.attr) {
+      Attr.strength => QuestCategory.strength,
+      Attr.endurance || Attr.consistency => QuestCategory.endurance,
+      Attr.mobility || Attr.recovery => QuestCategory.mobility,
+    };
     QuestCategory catFor() {
       Attr attrOf(QuestCategory c) => switch (c) {
         QuestCategory.strength => Attr.strength,
         QuestCategory.endurance => Attr.endurance,
         _ => Attr.mobility,
       };
+      final preferred = pathCat();
+      if (_rand.nextDouble() < 0.5 && preferred != null && pool.contains(preferred)) return preferred;
       pool.sort((a, b) => (attrLevels[attrOf(a)] ?? 1).compareTo(attrLevels[attrOf(b)] ?? 1));
       return _rand.nextInt(3) == 0 ? pool[_rand.nextInt(pool.length)] : pool.first;
     }
@@ -391,24 +447,37 @@ class QuestGenerator {
     );
 
     // Bonus quest.
+    // Bonus quest. Nothing that loads a limited or injured area, and no extra
+    // training volume on a rest, low-readiness or comeback day.
+    final easyDay = recovering || comeback;
     final bonusPool = [
       for (final b in kBonusQuests)
-        if (b.$1 != 'steps' || fit.stepsOn) b,
+        if (switch (b.$1) {
+          'steps' => fit.stepsOn,
+          'pushReps' => !easyDay && !avoid.any(const {'chest', 'triceps', 'shoulders'}.contains),
+          'coreSets' => !easyDay && !avoid.any(const {'abdomen', 'obliques', 'lowerback'}.contains),
+          _ => !easyDay,
+        })
+          b,
     ];
-    final b = bonusPool[_rand.nextInt(bonusPool.length)];
-    quests.add(
-      _quest(
-        QuestCategory.bonus,
-        b.$2,
-        b.$3,
-        const [],
-        30,
-        {Attr.consistency: 5},
-        check: b.$1,
-        target: b.$4,
-        unit: b.$5,
-      ),
-    );
+    // Always drawn, so the rest of the day's picks do not shift with the pool.
+    final roll = _rand.nextInt(1 << 16);
+    if (bonusPool.isNotEmpty) {
+      final b = bonusPool[roll % bonusPool.length];
+      quests.add(
+        _quest(
+          QuestCategory.bonus,
+          b.$2,
+          b.$3,
+          const [],
+          30,
+          {Attr.consistency: 5},
+          check: b.$1,
+          target: b.$4,
+          unit: b.$5,
+        ),
+      );
+    }
     return quests;
   }
 

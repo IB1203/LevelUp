@@ -49,7 +49,7 @@ Future<ExerciseArtData> loadExerciseArt(String slug, {bool still = false}) {
   }
   return _pending.putIfAbsent(key, () async {
     try {
-      final raw = await rootBundle.loadString('assets/art/$slug.txt');
+      final raw = await rootBundle.loadString('assets/art/$slug.txt', cache: false);
       final lines = [
         for (final d in raw.split('\n'))
           if (d.trim().isNotEmpty) d.trim(),
@@ -166,7 +166,9 @@ class _ExerciseArtState extends State<ExerciseArt> with SingleTickerProviderStat
   }
 
   void _sync() {
-    if (widget.live && (_art?.frames.length ?? 0) > 1) {
+    // Reduced motion: hold the first frame instead of looping the demonstration.
+    final calm = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (widget.live && !calm && (_art?.frames.length ?? 0) > 1) {
       final c = _c ??= AnimationController(vsync: this, duration: _cycle);
       if (!c.isAnimating && (widget.loops == null || c.value == 0)) c.repeat(count: widget.loops);
     } else {

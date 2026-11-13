@@ -15,6 +15,7 @@ const List<Exercise> kExercises = [
       'Lift the barbell off the rack and hold it directly above your chest with your arms fully extended.',
       'Lower the barbell slowly towards your chest, keeping your elbows tucked in.',
       'Pause for a moment when the barbell touches your chest.',
+      'Press the bar back up until your arms are straight, then repeat.',
     ],
   ),
   Exercise(
@@ -410,6 +411,7 @@ const List<Exercise> kExercises = [
       'Grasp the cable bar with an overhand grip, slightly wider than shoulder-width apart.',
       'Lean back slightly and engage your core.',
       'Pull the cable bar down towards your chest, squeezing your shoulder blades together.',
+      'Let the bar rise slowly until your arms are straight, then repeat.',
     ],
   ),
   Exercise(
@@ -447,8 +449,8 @@ const List<Exercise> kExercises = [
   Exercise(
     id: 'qXTaZnJ',
     name: 'Barbell Full Squat',
-    primary: 'glutes',
-    secondary: ['hamstrings', 'calves'],
+    primary: 'quads',
+    secondary: ['glutes', 'hamstrings', 'calves'],
     equipment: 'Barbell',
     difficulty: 'Intermediate',
     art: 'squat',
@@ -463,8 +465,8 @@ const List<Exercise> kExercises = [
   Exercise(
     id: 'zG0zs85',
     name: 'Barbell Front Squat',
-    primary: 'glutes',
-    secondary: ['hamstrings', 'calves'],
+    primary: 'quads',
+    secondary: ['glutes', 'hamstrings', 'calves'],
     equipment: 'Barbell',
     difficulty: 'Intermediate',
     art: 'front-squat',
@@ -713,6 +715,7 @@ const List<Exercise> kExercises = [
       'Grasp the bar with an overhand grip, hands shoulder-width apart.',
       'Keep your elbows close to your sides and your upper arms stationary.',
       'Exhale and push the bar down until your elbows are fully extended.',
+      'Let the bar rise slowly until your forearms are about level with the floor, then repeat.',
     ],
   ),
   Exercise(
@@ -817,7 +820,7 @@ const List<Exercise> kExercises = [
     primary: 'abdomen',
     secondary: [],
     equipment: 'Bodyweight',
-    difficulty: 'Beginner',
+    difficulty: 'Intermediate',
     art: 'hanging-leg-raise',
     steps: [
       'Hang from a pull-up bar with your arms fully extended and your palms facing away from you.',
@@ -841,6 +844,7 @@ const List<Exercise> kExercises = [
       'Hold your hands together in front of your chest or hold a weight if desired.',
       'Lift your feet off the ground, balancing on your sit bones.',
       'Twist your torso to the right, bringing your hands or weight towards the right side of your body.',
+      'Twist to the left in the same way, and keep alternating sides.',
     ],
   ),
   Exercise(
@@ -1017,6 +1021,7 @@ const List<Exercise> kExercises = [
       'Grasp the handles with an overhand grip, shoulder-width apart.',
       'Keep your back straight and your core engaged.',
       'Pull the handles towards your body, squeezing your shoulder blades together.',
+      'Straighten your arms slowly to return to the start, then repeat.',
     ],
   ),
   Exercise(
@@ -1049,6 +1054,7 @@ const List<Exercise> kExercises = [
       'Grasp the handles with an overhand grip, slightly wider than shoulder-width apart.',
       'Keep your back straight and engage your core.',
       'Pull the handles towards your torso, squeezing your shoulder blades together.',
+      'Straighten your arms slowly to return to the start, then repeat.',
     ],
   ),
   Exercise(
@@ -1438,8 +1444,8 @@ const List<Exercise> kExercises = [
   Exercise(
     id: 'leg-swings-stretch',
     name: 'Leg Swings',
-    primary: 'back',
-    secondary: ['glutes', 'hamstrings'],
+    primary: 'hamstrings',
+    secondary: ['glutes'],
     equipment: 'Bodyweight',
     difficulty: 'Beginner',
     art: 'leg-swings-stretch',
@@ -1593,6 +1599,7 @@ const List<Exercise> kExercises = [
       'Grasp the handles with your palms facing down and your arms extended out to the sides.',
       'Take a step forward, keeping your arms slightly bent.',
       'With a slight bend in your elbows, bring your hands together in front of your chest.',
+      'Open your arms slowly back to the start, then repeat.',
     ],
   ),
   Exercise(
@@ -1689,6 +1696,7 @@ const List<Exercise> kExercises = [
       'Grip the bar with an overhand grip slightly wider than shoulder-width apart.',
       'Unrack the bar and lower it towards your chest, keeping your elbows tucked in.',
       'Pause for a moment when the bar touches your chest.',
+      'Press the bar back up until your arms are straight, then repeat.',
     ],
   ),
   Exercise(
@@ -1945,6 +1953,8 @@ const List<Exercise> kExercises = [
       'Bend your knees and lower your hips into a squat position, keeping your back straight and chest up.',
       'Explosively extend your hips, knees, and ankles, driving the barbell upwards.',
       'As the barbell reaches chest level, pull it upwards with your arm, keeping it close to your body.',
+      'Drop under the bar and catch it overhead with your arm locked out, then stand up fully.',
+      'Lower the bar under control, repeat, then switch arms.',
     ],
   ),
   Exercise(
@@ -2270,8 +2280,8 @@ const List<Exercise> kExercises = [
   Exercise(
     id: 'CqhoytW',
     name: 'Smith Hip Thrust',
-    primary: 'abdomen',
-    secondary: ['glutes', 'hamstrings'],
+    primary: 'glutes',
+    secondary: ['hamstrings', 'abdomen'],
     equipment: 'Machine',
     difficulty: 'Beginner',
     art: 'smith-machine-hip-thrust',
@@ -2400,7 +2410,7 @@ const List<Exercise> kExercises = [
     primary: 'abdomen',
     secondary: [],
     equipment: 'Bodyweight',
-    difficulty: 'Intermediate',
+    difficulty: 'Beginner',
     art: 'hanging-knee-raise',
     steps: [
       'Hang from a pull-up bar with your arms fully extended and your knees bent at a 90-degree angle.',
@@ -2951,6 +2961,8 @@ const List<Exercise> kExercises = [
       'Bend your knees and lower your body down into a squat position, keeping your back straight and chest up.',
       'Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart.',
       'Lift the barbell off the rack and step back, ensuring your feet are still shoulder-width apart.',
+      'Bend your knees and hips to sit back until you lightly touch the bench.',
+      'Push through your feet to stand back up, then repeat.',
     ],
   ),
   Exercise(
@@ -2972,8 +2984,8 @@ const List<Exercise> kExercises = [
   Exercise(
     id: 'SGY8Zui',
     name: 'Barbell Push Press',
-    primary: 'quads',
-    secondary: ['hamstrings', 'glutes', 'triceps'],
+    primary: 'shoulders',
+    secondary: ['triceps', 'quads', 'glutes'],
     equipment: 'Barbell',
     difficulty: 'Advanced',
     art: 'push-press',
@@ -2991,7 +3003,7 @@ const List<Exercise> kExercises = [
     primary: 'quads',
     secondary: ['hamstrings', 'glutes'],
     equipment: 'Bodyweight',
-    difficulty: 'Intermediate',
+    difficulty: 'Beginner',
     art: 'bodyweight-squat',
     steps: [
       'Stand with your feet shoulder-width apart.',
@@ -3070,7 +3082,7 @@ const List<Exercise> kExercises = [
     primary: 'quads',
     secondary: ['glutes', 'hamstrings', 'calves'],
     equipment: 'Bodyweight',
-    difficulty: 'Intermediate',
+    difficulty: 'Beginner',
     art: 'lateral-lunge',
     steps: [
       'Stand with your feet wide apart and your hands together in front of your chest.',
@@ -3179,8 +3191,8 @@ const List<Exercise> kExercises = [
   Exercise(
     id: 'dG5Smob',
     name: 'Rack Pull',
-    primary: 'quads',
-    secondary: ['hamstrings', 'glutes', 'calves', 'lowerback'],
+    primary: 'glutes',
+    secondary: ['hamstrings', 'lowerback'],
     equipment: 'Barbell',
     difficulty: 'Advanced',
     art: 'rack-pull',
@@ -3734,6 +3746,7 @@ const List<Exercise> kExercises = [
       'Keep your elbows close to your sides and your upper arms stationary.',
       'Exhale and curl the cable attachment towards your shoulders, contracting your biceps.',
       'Pause for a moment at the top of the movement, squeezing your biceps.',
+      'Lower the bar slowly until your arms are straight, then repeat.',
     ],
   ),
   Exercise(
@@ -3750,6 +3763,7 @@ const List<Exercise> kExercises = [
       'Hold a barbell with an underhand grip, shoulder-width apart.',
       'Extend your arms fully, allowing the barbell to hang down towards the floor.',
       'Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.',
+      'Lower the weight slowly until your arms are straight, then repeat.',
     ],
   ),
   Exercise(
@@ -3830,6 +3844,7 @@ const List<Exercise> kExercises = [
       'Grasp the bar with an underhand grip, hands shoulder-width apart.',
       'Extend your arms fully, keeping your elbows close to your sides.',
       'Keeping your upper arms stationary, exhale and curl the bar up towards your shoulders.',
+      'Lower the weight slowly until your arms are straight, then repeat.',
     ],
   ),
   Exercise(
@@ -3846,6 +3861,7 @@ const List<Exercise> kExercises = [
       'Grasp the bar with an underhand grip, hands shoulder-width apart.',
       'Extend your arms fully, keeping your elbows close to your sides.',
       'Keeping your upper arms stationary, curl the bar towards your chest by contracting your biceps.',
+      'Lower the weight slowly until your arms are straight, then repeat.',
     ],
   ),
   Exercise(
@@ -4085,6 +4101,8 @@ const List<Exercise> kExercises = [
       'Stand facing away from the machine with your feet shoulder-width apart.',
       'Grasp the bar with an overhand grip and extend your arms straight overhead.',
       'Lean forward slightly, keeping your back straight and core engaged.',
+      'Keeping your upper arms still, bend your elbows to lower the bar behind your head.',
+      'Straighten your arms to bring the bar back overhead, then repeat.',
     ],
   ),
   Exercise(
@@ -4404,6 +4422,8 @@ const List<Exercise> kExercises = [
       'Step under the bar and position it across your upper back, resting on your traps.',
       'Grip the bar with your hands slightly wider than shoulder-width apart.',
       'Unrack the bar and take a step back, maintaining a stable stance.',
+      'Bend your knees and hips to lower yourself as far as you comfortably can, keeping your chest up.',
+      'Push through your feet to stand back up, then repeat.',
     ],
   ),
   Exercise(
@@ -5112,8 +5132,8 @@ const List<Exercise> kExercises = [
   Exercise(
     id: 'iPm26QU',
     name: 'Step-down',
-    primary: 'calves',
-    secondary: ['hamstrings', 'glutes'],
+    primary: 'quads',
+    secondary: ['glutes', 'hamstrings'],
     equipment: 'Bodyweight',
     difficulty: 'Intermediate',
     art: 'step-down',
@@ -7517,7 +7537,7 @@ const Map<String, String> kSportIcons = {
 
 const Set<String> kCardioExtras = {
   'jump-rope', 'battle-ropes', 'burpee', 'half-burpee', 'mountain-climber', 'high-knees', 'jumping-jack',
-  'skater-hop', 'squat-thrust', 'sprawl', 'lateral-shuffle', 'plank-jack',
+  'skater-hop', 'squat-thrust', 'sprawl', 'lateral-shuffle', 'plank-jack', 'seal-jack',
 };
 
 const List<List<String>> kProgressions = [

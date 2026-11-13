@@ -617,7 +617,7 @@ class _PlanDoc {
 
 const _author = 'InlitX';
 const _app = 'Level Up';
-const _site = 'https://github.com/InlitX/GymMane';
+const _site = 'https://github.com/IB1203/LevelUp';
 
 String _two(int n) => n.toString().padLeft(2, '0');
 

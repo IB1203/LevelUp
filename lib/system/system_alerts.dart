@@ -58,7 +58,9 @@ class _SystemAlertsHostState extends State<SystemAlertsHost> {
     if (_showing || !mounted || !hunter.registered) return;
     if (fit.route == 'session' || fit.isSessionActive || fit.route == 'register') return;
     final level = hunter.alertLevel;
-    final kinds = level == 'off'
+    // The app-wide celebrations switch silences Hunter pop-ups too; the rewards
+    // themselves are still granted and stay in the inbox.
+    final kinds = level == 'off' || !fit.gamification
         ? const <String>{}
         : (level == 'important' ? SystemAlertsHost.important : SystemAlertsHost.all);
     // Touch status first so any pending rewards are processed.
@@ -105,18 +107,18 @@ class _SystemAlertsHostState extends State<SystemAlertsHost> {
   Widget build(BuildContext context) => widget.child;
 }
 
-({String kicker, Color color}) _look(HunterNote n) => switch (n.kind) {
-  'level' => (kicker: 'LEVEL UP!', color: Sx.mana),
-  'achievement' => (kicker: 'ACHIEVEMENT UNLOCKED', color: Sx.violet),
-  'record' => (kicker: 'PERSONAL RECORD ACHIEVED', color: Sx.vital),
-  'questdone' => (kicker: 'QUEST COMPLETE', color: Sx.vital),
-  'skillready' || 'skill' => (kicker: 'NEW SKILL UNLOCKED', color: Sx.violet),
-  'trial' => (kicker: 'TRIAL PASSED', color: Sx.gold),
-  'boss' => (kicker: 'BOSS DEFEATED', color: Sx.alert),
-  'gate' => (kicker: 'DUNGEON CLEARED', color: Sx.vital),
-  'weekly' => (kicker: 'WEEKLY MISSION COMPLETE', color: Sx.gold),
-  'promo' => (kicker: 'RANK PROMOTION AVAILABLE', color: Sx.gold),
-  _ => (kicker: n.title, color: Sx.mana),
+({String kicker, Color color}) _look(HunterNote n, HunterPalette sx) => switch (n.kind) {
+  'level' => (kicker: 'LEVEL UP!', color: sx.mana),
+  'achievement' => (kicker: 'ACHIEVEMENT UNLOCKED', color: sx.violet),
+  'record' => (kicker: 'PERSONAL RECORD ACHIEVED', color: sx.vital),
+  'questdone' => (kicker: 'QUEST COMPLETE', color: sx.vital),
+  'skillready' || 'skill' => (kicker: 'NEW SKILL UNLOCKED', color: sx.violet),
+  'trial' => (kicker: 'TRIAL PASSED', color: sx.gold),
+  'boss' => (kicker: 'BOSS DEFEATED', color: sx.alert),
+  'gate' => (kicker: 'DUNGEON CLEARED', color: sx.vital),
+  'weekly' => (kicker: 'WEEKLY MISSION COMPLETE', color: sx.gold),
+  'promo' => (kicker: 'RANK PROMOTION AVAILABLE', color: sx.gold),
+  _ => (kicker: n.title, color: sx.mana),
 };
 
 class _AlertWindow extends StatelessWidget {
@@ -126,9 +128,9 @@ class _AlertWindow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    final look = _look(note);
+    final look = _look(note, context.sx);
     final level = note.kind == 'level';
-    final parts = note.body.split('→');
+    final parts = note.body.split(RegExp(r'→| to '));
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -215,7 +217,7 @@ class _LevelCounter extends StatelessWidget {
           tween: Tween(begin: still ? to.toDouble() : from.toDouble(), end: to.toDouble()),
           duration: const Duration(milliseconds: 900),
           curve: Curves.easeOutCubic,
-          builder: (context, v, _) => Text('${v.round()}', style: Sx.disp(46, color: Sx.mana, spacing: 0)),
+          builder: (context, v, _) => Text('${v.round()}', style: Sx.disp(46, color: context.sx.mana, spacing: 0)),
         ),
       ],
     );
@@ -232,7 +234,7 @@ class _RankPromotion extends StatelessWidget {
     final to = note.id.startsWith('rank:') ? note.id.substring(5) : 'D';
     final history = hunter.rankHistory;
     final from = history.isEmpty ? 'E' : history.last.from;
-    final color = Sx.rank(to);
+    final color = context.sx.rank(to);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -280,7 +282,7 @@ class _RankPromotion extends StatelessWidget {
                     Text(
                       '+$kRankPromotionXp XP · +1 skill point · new profile frame',
                       textAlign: TextAlign.center,
-                      style: Sx.disp(15, color: Sx.gold),
+                      style: Sx.disp(15, color: context.sx.gold),
                     ),
                     const SizedBox(height: 14),
                     TextButton(

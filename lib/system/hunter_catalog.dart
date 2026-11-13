@@ -107,7 +107,15 @@ const Map<String, List<String>> kLimitations = {
 };
 
 class HunterClass {
-  const HunterClass(this.id, this.name, this.focus, this.story, this.attr);
+  const HunterClass(
+    this.id,
+    this.name,
+    this.focus,
+    this.story,
+    this.attr, {
+    required this.tree,
+    required this.program,
+  });
   final String id;
   final String name;
   final String focus;
@@ -115,6 +123,12 @@ class HunterClass {
 
   /// The attribute this class leans towards when quests rotate.
   final Attr attr;
+
+  /// Skill tree this path studies first.
+  final String tree;
+
+  /// Program template that matches the path's training style.
+  final String program;
 }
 
 const List<HunterClass> kHunterClasses = [
@@ -124,6 +138,8 @@ const List<HunterClass> kHunterClasses = [
     'Build muscle',
     'You grow by volume. Every set is a wave against the gate.',
     Attr.strength,
+    tree: 'Strength',
+    program: 'ppl',
   ),
   HunterClass(
     'strength',
@@ -131,14 +147,26 @@ const List<HunterClass> kHunterClasses = [
     'Get stronger',
     'You grow by force. Heavy, controlled, measured in good reps.',
     Attr.strength,
+    tree: 'Strength',
+    program: 'stronglifts',
   ),
-  HunterClass('endurance', 'Ranger', 'Endurance', 'You grow by distance. Your heart is the engine.', Attr.endurance),
+  HunterClass(
+    'endurance',
+    'Ranger',
+    'Endurance',
+    'You grow by distance. Your heart is the engine.',
+    Attr.endurance,
+    tree: 'Endurance',
+    program: 'fullbody',
+  ),
   HunterClass(
     'fatloss',
     'Shadowblade',
     'Lose fat',
     'You grow by discipline. Steady training and patience, never crash diets.',
     Attr.consistency,
+    tree: 'Discipline',
+    program: 'home',
   ),
   HunterClass(
     'mobility',
@@ -146,11 +174,20 @@ const List<HunterClass> kHunterClasses = [
     'Mobility',
     'You grow by control. Range and recovery first; strength follows.',
     Attr.mobility,
+    tree: 'Mobility',
+    program: 'rr',
   ),
 ];
 
 HunterClass hunterClassById(String? id) =>
     kHunterClasses.firstWhere((c) => c.id == id, orElse: () => kHunterClasses.first);
+
+/// Skill trees in the order a path studies them: its own tree first.
+List<String> skillTreesFor(String? classId) {
+  final lead = hunterClassById(classId).tree;
+  return [lead, ...kSkillTrees.where((t) => t != lead)];
+}
+
 
 // --- Achievements (spec §10) ------------------------------------------------------
 

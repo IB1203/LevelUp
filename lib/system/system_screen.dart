@@ -15,16 +15,16 @@ import 'hunter_rules.dart';
 import 'system_sheets.dart';
 import 'system_widgets.dart';
 
-/// The full System hub.
+/// The full System hub — signature Hunter experience.
 class SystemScreen extends StatefulWidget {
   const SystemScreen({super.key});
 
-  static const tabs = ['Status', 'Quests', 'Bosses', 'Rank', 'Skills', 'Awards', 'Records', 'Timeline', 'Vitals'];
+  static const tabs = ['Status', 'Quests', 'Bosses', 'Rank', 'Skills', 'Achievements', 'Records', 'Timeline', 'Vitals'];
   static int initialTab = 0;
 
   static void open(int tab) {
     initialTab = tab;
-    fit.pushRoute('system');
+    fit.goSystem();
   }
 
   @override
@@ -40,6 +40,7 @@ class _SystemScreenState extends State<SystemScreen> {
       listenable: hunter,
       builder: (context, _) {
         final s = hunter.status;
+        final gc = context.gc;
         return RiseScope(
           id: 'system$_tab',
           once: false,
@@ -51,13 +52,21 @@ class _SystemScreenState extends State<SystemScreen> {
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                   sliver: SliverToBoxAdapter(
-                    child: ScreenHeader(
-                      title: 'SYSTEM',
-                      subtitle: s.registered
-                          ? '${s.rank.letter}-Rank ${s.rank.title} · Lv ${s.level}'
-                          : 'Not registered',
-                      onBack: () => fit.popRoute(),
-                      titleSize: 22,
+                    // A root tab: a title, not a back arrow.
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Semantics(
+                          header: true,
+                          child: Text('Hunter',
+                              style: AppTheme.f(28, weight: FontWeight.w800, color: gc.text, letterSpacing: -0.4)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          s.registered ? '${s.rank.letter}-Rank ${s.rank.title} · Lv ${s.level}' : 'Awaken to begin',
+                          style: AppTheme.f(12.5, weight: FontWeight.w500, color: gc.textSecondary),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -72,16 +81,40 @@ class _SystemScreenState extends State<SystemScreen> {
                       !s.registered
                           ? [
                               SystemWindow(
-                                title: 'Notice',
+                                title: 'Awaken',
+                                accent: gc.accent,
+                                glow: true,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
-                                    Text(
-                                      'Register as a hunter to activate the System.',
-                                      style: AppTheme.s(15, color: context.gc.text),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: gc.accent.withValues(alpha: 0.15),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(PhosphorIconsFill.sparkle, size: 20, color: gc.accent),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text('Register as a hunter',
+                                                  style: AppTheme.s(15, color: gc.text)),
+                                              const SizedBox(height: 4),
+                                              Text('Your journey starts at E-Rank, Level 1.',
+                                                  style: AppTheme.s(12.5, color: gc.textSecondary)),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 12),
-                                    PrimaryButton(label: 'Register', onTap: () => fit.pushRoute('register')),
+                                    const SizedBox(height: 16),
+                                    PrimaryButton(label: 'Register now', onTap: () => fit.pushRoute('register')),
                                   ],
                                 ),
                               ),
@@ -151,22 +184,28 @@ class _SystemScreenState extends State<SystemScreen> {
 
   List<Widget> _status(BuildContext context, HunterStatus s) {
     final gc = context.gc;
-    Widget row(String k, String v, {VoidCallback? onTap, Color? color}) => InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(k, style: AppTheme.s(14, color: gc.textSecondary)),
+    Widget row(String k, String v, {VoidCallback? onTap, Color? color, String? semanticsLabel}) =>
+        Semantics(
+          container: true,
+          button: onTap != null,
+          label: semanticsLabel ?? '$k $v',
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(k, style: AppTheme.s(14, color: gc.textSecondary)),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(v, style: Sx.disp(17, color: color ?? gc.text)),
+                  if (onTap != null) Icon(PhosphorIconsBold.caretRight, size: 18, color: gc.textTertiary),
+                ],
+              ),
             ),
-            const SizedBox(width: 8),
-            Text(v, style: Sx.disp(17, color: color ?? gc.text)),
-            if (onTap != null) Icon(PhosphorIconsBold.caretRight, size: 18, color: gc.textTertiary),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
     return [
       SystemWindow(
         title: 'Player status',
@@ -176,9 +215,15 @@ class _SystemScreenState extends State<SystemScreen> {
           children: [
             Row(
               children: [
-                GestureDetector(
-                  onTap: () => showTitlesSheet(context),
-                  child: FramedEmblem(letter: s.rank.letter, frame: s.frame, size: 70),
+                Semantics(
+                  container: true,
+                  button: true,
+                  label: 'Change title and frame',
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => showTitlesSheet(context),
+                    child: FramedEmblem(letter: s.rank.letter, frame: s.frame, size: 70),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -187,9 +232,22 @@ class _SystemScreenState extends State<SystemScreen> {
                     children: [
                       Text(s.player!.name, style: Sx.disp(21, color: gc.text)),
                       if (s.currentTitle != null)
-                        GestureDetector(
-                          onTap: () => showTitlesSheet(context),
-                          child: Text('«${s.currentTitle!.name}»', style: AppTheme.s(13, color: Sx.gold)),
+                        Semantics(
+                          container: true,
+                          button: true,
+                          label: 'Title: ${s.currentTitle!.name}. Change title and frame',
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => showTitlesSheet(context),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minHeight: 48),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text('«${s.currentTitle!.name}»',
+                                    style: AppTheme.s(13, color: context.sx.gold)),
+                              ),
+                            ),
+                          ),
                         ),
                       Text(
                         '${hunterClassById(s.player!.classId).name} · ${s.rank.letter}-Rank ${s.rank.title}',
@@ -201,13 +259,13 @@ class _SystemScreenState extends State<SystemScreen> {
                 Column(
                   children: [
                     Text('LEVEL', style: Sx.disp(11, color: gc.textSecondary)),
-                    Text('${s.level}', style: Sx.disp(40, color: Sx.mana, spacing: 0)),
+                    Text('${s.level}', style: Sx.disp(40, color: context.sx.mana, spacing: 0)),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 14),
-            SystemBar(value: s.levelRatio),
+            SystemBar(value: s.levelRatio, semanticsLabel: 'Level ${s.level}, progress ${(s.levelRatio * 100).round()} percent'),
             const SizedBox(height: 6),
             Row(
               children: [
@@ -231,27 +289,36 @@ class _SystemScreenState extends State<SystemScreen> {
         child: Column(
           children: [
             for (final a in Attr.values)
-              InkWell(
-                onTap: () => showAttributeSheet(context, a),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Column(
-                    children: [
-                      Row(
+              Semantics(
+                container: true,
+                button: true,
+                label: '${a.label} attribute, level ${s.attrs[a]!.level}',
+                hint: 'Opens the progress breakdown',
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: InkWell(
+                    onTap: () => showAttributeSheet(context, a),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: Text(a.label.toUpperCase(), style: Sx.disp(15.5, color: gc.text)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(a.label.toUpperCase(), style: Sx.disp(15.5, color: gc.text)),
+                              ),
+                              Text(
+                                'LV ${s.attrs[a]!.level.toString().padLeft(2, '0')}',
+                                style: Sx.disp(16, color: context.sx.mana),
+                              ),
+                              Icon(PhosphorIconsBold.caretRight, size: 18, color: gc.textTertiary),
+                            ],
                           ),
-                          Text(
-                            'LV ${s.attrs[a]!.level.toString().padLeft(2, '0')}',
-                            style: Sx.disp(16, color: Sx.mana),
-                          ),
-                          Icon(PhosphorIconsBold.caretRight, size: 18, color: gc.textTertiary),
+                          const SizedBox(height: 4),
+                          SystemBar(value: s.attrs[a]!.ratio, height: 4, color: context.sx.violet),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      SystemBar(value: s.attrs[a]!.ratio, height: 4, color: Sx.violet),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -278,7 +345,7 @@ class _SystemScreenState extends State<SystemScreen> {
           children: [
             row('Achievements', '${s.achievementsUnlocked} / ${s.achievements.length}', onTap: () => _go(5)),
             row('Skills', '${s.skillsLearned} / ${s.skills.length}', onTap: () => _go(4)),
-            row('Skill points', '${s.skillPoints}', onTap: () => _go(4), color: s.skillPoints > 0 ? Sx.gold : null),
+            row('Skill points', '${s.skillPoints}', onTap: () => _go(4), color: s.skillPoints > 0 ? context.sx.gold : null),
             row('Titles', '${s.titlesUnlocked} / ${s.titles.length}', onTap: () => showTitlesSheet(context)),
             row('Personal records', '${s.records.length}', onTap: () => _go(6)),
           ],
@@ -310,7 +377,7 @@ class _SystemScreenState extends State<SystemScreen> {
                         ],
                       ),
                     ),
-                    Text('+${t.xp}', style: Sx.disp(15, color: t.xp > 0 ? Sx.gold : gc.textTertiary)),
+                    Text('+${t.xp}', style: Sx.disp(15, color: t.xp > 0 ? context.sx.gold : gc.textTertiary)),
                   ],
                 ),
               ),
@@ -361,11 +428,11 @@ class _SystemScreenState extends State<SystemScreen> {
   Widget _gateCard(BuildContext context, GateRun g) {
     final gc = context.gc;
     final color = switch (g.status) {
-      GateStatus.cleared => Sx.vital,
-      GateStatus.active => Sx.mana,
-      GateStatus.failed => Sx.gold,
+      GateStatus.cleared => context.sx.vital,
+      GateStatus.active => context.sx.mana,
+      GateStatus.failed => context.sx.gold,
       GateStatus.locked => gc.border,
-      GateStatus.available => Sx.rank(g.def.rank),
+      GateStatus.available => context.sx.rank(g.def.rank),
     };
     return Opacity(
       opacity: g.status == GateStatus.locked ? 0.55 : 1,
@@ -378,12 +445,12 @@ class _SystemScreenState extends State<SystemScreen> {
           children: [
             Row(
               children: [
-                SystemChip('${g.def.rank}-Rank', color: Sx.rank(g.def.rank)),
+                SystemChip('${g.def.rank}-Rank', color: context.sx.rank(g.def.rank)),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(g.def.name, style: Sx.disp(17, color: gc.text, spacing: 0.4)),
                 ),
-                Text('+${g.def.xp} XP', style: Sx.disp(13, color: Sx.gold)),
+                Text('+${g.def.xp} XP', style: Sx.disp(13, color: context.sx.gold)),
               ],
             ),
             const SizedBox(height: 6),
@@ -436,9 +503,9 @@ class _SystemScreenState extends State<SystemScreen> {
       const SizedBox(height: 12),
       for (final b in s.bosses) ...[
         SystemWindow(
-          accent: b.wonBeginner || b.wonAdvanced ? Sx.vital : Sx.alert,
+          accent: b.wonBeginner || b.wonAdvanced ? context.sx.vital : context.sx.alert,
           title: b.def.name,
-          trailing: Text('+${b.def.xp} XP', style: Sx.disp(13, color: Sx.gold)),
+          trailing: Text('+${b.def.xp} XP', style: Sx.disp(13, color: context.sx.gold)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -450,7 +517,7 @@ class _SystemScreenState extends State<SystemScreen> {
                   if (s.readiness.low) 'readiness low: rest first',
                   if (b.def.title != null) 'title: ${b.def.title}',
                 ].join(' · '),
-                style: AppTheme.s(12.5, color: b.questsMet && !s.readiness.low ? gc.textTertiary : Sx.gold),
+                style: AppTheme.s(12.5, color: b.questsMet && !s.readiness.low ? gc.textTertiary : context.sx.gold),
               ),
               const SizedBox(height: 10),
               Row(
@@ -517,7 +584,7 @@ class _SystemScreenState extends State<SystemScreen> {
     final othersMet = s.promotion.where((r) => r != trialReq).every((r) => r.met);
     return [
       SystemWindow(
-        accent: Sx.rank(s.rank.letter),
+        accent: context.sx.rank(s.rank.letter),
         child: Row(
           children: [
             FramedEmblem(letter: s.rank.letter, frame: s.frame, size: 64),
@@ -541,7 +608,7 @@ class _SystemScreenState extends State<SystemScreen> {
       if (next != null)
         SystemWindow(
           title: 'Promotion to ${next.letter}-Rank',
-          accent: s.promotionReady ? Sx.gold : Sx.mana,
+          accent: s.promotionReady ? context.sx.gold : context.sx.mana,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -552,7 +619,7 @@ class _SystemScreenState extends State<SystemScreen> {
                     children: [
                       Icon(
                         r.met ? PhosphorIconsFill.checkSquare : PhosphorIconsRegular.square,
-                        color: r.met ? Sx.vital : gc.textTertiary,
+                        color: r.met ? context.sx.vital : gc.textTertiary,
                         size: 20,
                       ),
                       const SizedBox(width: 10),
@@ -568,7 +635,7 @@ class _SystemScreenState extends State<SystemScreen> {
                 ),
               const SizedBox(height: 12),
               if (s.promotionReady)
-                PrimaryButton(label: 'Begin rank promotion', bg: Sx.gold, onTap: () => hunter.promote())
+                PrimaryButton(label: 'Begin rank promotion', bg: context.sx.gold, onTap: () => hunter.promote())
               else if (trialReq != null && !trialReq.met)
                 Opacity(
                   opacity: othersMet || s.level >= s.rank.promoLevel ? 1 : 0.45,
@@ -618,7 +685,7 @@ class _SystemScreenState extends State<SystemScreen> {
                       'Lv ${r.minLevel}–${r.maxLevel}',
                       style: AppTheme.s(
                         12.5,
-                        color: rankIndex(r.letter) <= rankIndex(s.rank.letter) ? Sx.rank(r.letter) : gc.textTertiary,
+                        color: rankIndex(r.letter) <= rankIndex(s.rank.letter) ? context.sx.rank(r.letter) : gc.textTertiary,
                       ),
                     ),
                   ],
@@ -640,7 +707,7 @@ class _SystemScreenState extends State<SystemScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Row(
                         children: [
-                          Text('${r.from} → ${r.to}', style: Sx.disp(16, color: Sx.rank(r.to))),
+                          Text('${r.from} to ${r.to}', style: Sx.disp(16, color: context.sx.rank(r.to))),
                           const Spacer(),
                           Text(dayKey(r.at), style: AppTheme.s(12.5, color: gc.textSecondary)),
                         ],
@@ -663,10 +730,10 @@ class _SystemScreenState extends State<SystemScreen> {
     final gc = context.gc;
     return [
       SystemWindow(
-        accent: Sx.gold,
+        accent: context.sx.gold,
         child: Row(
           children: [
-            Text('${s.skillPoints}', style: Sx.disp(36, color: Sx.gold, spacing: 0)),
+            Text('${s.skillPoints}', style: Sx.disp(36, color: context.sx.gold, spacing: 0)),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -679,12 +746,12 @@ class _SystemScreenState extends State<SystemScreen> {
         ),
       ),
       const SizedBox(height: 12),
-      for (final tree in kSkillTrees) ...[
+      for (final tree in skillTreesFor(s.player?.classId)) ...[
         _label(context, '$tree tree'),
         for (final k in s.skills.where((k) => k.def.tree == tree)) ...[
           SystemWindow(
             glow: k.learnable,
-            accent: k.learned ? Sx.vital : (k.learnable ? Sx.gold : gc.border),
+            accent: k.learned ? context.sx.vital : (k.learnable ? context.sx.gold : gc.border),
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -696,7 +763,7 @@ class _SystemScreenState extends State<SystemScreen> {
                           ? PhosphorIconsFill.sparkle
                           : (k.learnable ? PhosphorIconsRegular.lockSimpleOpen : PhosphorIconsRegular.lockSimple),
                       size: 18,
-                      color: k.learned ? Sx.vital : (k.learnable ? Sx.gold : gc.textTertiary),
+                      color: k.learned ? context.sx.vital : (k.learnable ? context.sx.gold : gc.textTertiary),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -715,14 +782,14 @@ class _SystemScreenState extends State<SystemScreen> {
                   SystemBar(value: (k.progress / k.def.threshold).clamp(0, 1).toDouble(), height: 4),
                   const SizedBox(height: 3),
                   Text(
-                    '${k.progress is double ? (k.progress as double).toStringAsFixed(1) : k.progress} / ${k.def.threshold}'
+                    '${k.progress >= k.def.threshold ? k.def.threshold : k.progress is double ? (k.progress as double).toStringAsFixed(1) : k.progress} / ${k.def.threshold}'
                     '${!k.attrMet ? ' · needs ${k.def.attr!.label} ${k.def.attrLevel}' : ''}'
                     '${!k.prereqMet ? ' · learn the previous skill first' : ''}',
                     style: AppTheme.s(11.5, color: gc.textTertiary),
                   ),
                 ],
                 const SizedBox(height: 4),
-                Text(k.def.reward, style: AppTheme.s(12.5, color: k.learned ? Sx.vital : gc.textTertiary)),
+                Text(k.def.reward, style: AppTheme.s(12.5, color: k.learned ? context.sx.vital : gc.textTertiary)),
               ],
             ),
           ),
@@ -749,7 +816,7 @@ class _SystemScreenState extends State<SystemScreen> {
             opacity: a.unlocked ? 1 : 0.55,
             child: SystemWindow(
               glow: a.unlocked,
-              accent: a.unlocked ? rarityColor(a.def.rarity.name) : gc.border,
+              accent: a.unlocked ? rarityColor(a.def.rarity.name, context.sx) : gc.border,
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               child: Row(
                 children: [
@@ -758,12 +825,12 @@ class _SystemScreenState extends State<SystemScreen> {
                     height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: rarityColor(a.def.rarity.name).withValues(alpha: a.unlocked ? 0.18 : 0.06),
-                      border: Border.all(color: rarityColor(a.def.rarity.name).withValues(alpha: a.unlocked ? 1 : 0.3)),
+                      color: rarityColor(a.def.rarity.name, context.sx).withValues(alpha: a.unlocked ? 0.18 : 0.06),
+                      border: Border.all(color: rarityColor(a.def.rarity.name, context.sx).withValues(alpha: a.unlocked ? 1 : 0.3)),
                     ),
                     child: Icon(
                       badgeIcon(a.def.icon),
-                      color: a.unlocked ? rarityColor(a.def.rarity.name) : gc.textTertiary,
+                      color: a.unlocked ? rarityColor(a.def.rarity.name, context.sx) : gc.textTertiary,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -777,12 +844,12 @@ class _SystemScreenState extends State<SystemScreen> {
                           a.unlocked
                               ? '${a.def.rarity.label} · unlocked ${dayKey(a.unlockedAt!)}'
                               : '${a.def.rarity.label} · ${a.progress is double ? (a.progress as double).toStringAsFixed(1) : a.progress}/${a.def.threshold}',
-                          style: AppTheme.s(11.5, color: rarityColor(a.def.rarity.name)),
+                          style: AppTheme.s(11.5, color: rarityColor(a.def.rarity.name, context.sx)),
                         ),
                       ],
                     ),
                   ),
-                  Text('+${a.def.xp}', style: Sx.disp(14, color: Sx.gold)),
+                  Text('+${a.def.xp}', style: Sx.disp(14, color: context.sx.gold)),
                 ],
               ),
             ),
@@ -843,7 +910,7 @@ class _SystemScreenState extends State<SystemScreen> {
                       Expanded(
                         child: Text(r.type.label, style: AppTheme.s(13, color: gc.textSecondary)),
                       ),
-                      Text(v(r), style: Sx.disp(15, color: Sx.mana)),
+                      Text(v(r), style: Sx.disp(15, color: context.sx.mana)),
                       const SizedBox(width: 8),
                       Text('${prev(r)} · ${dayKey(r.at)}', style: AppTheme.s(11, color: gc.textTertiary)),
                     ],
@@ -864,11 +931,11 @@ class _SystemScreenState extends State<SystemScreen> {
     final events = s.timeline.reversed.toList();
     final start = s.player!.created;
     Color c(String k) => switch (k) {
-      'level' => Sx.mana,
-      'rank' => Sx.gold,
-      'achievement' => Sx.violet,
-      'record' => Sx.vital,
-      'boss' => Sx.alert,
+      'level' => context.sx.mana,
+      'rank' => context.sx.gold,
+      'achievement' => context.sx.violet,
+      'record' => context.sx.vital,
+      'boss' => context.sx.alert,
       _ => gc.textSecondary,
     };
     return [
@@ -930,7 +997,7 @@ class _SystemScreenState extends State<SystemScreen> {
     final r = s.readiness;
     final rColor = !r.logged
         ? gc.textTertiary
-        : (r.pain ? Sx.alert : (r.score >= 75 ? Sx.vital : (r.score >= 55 ? Sx.mana : Sx.gold)));
+        : (r.pain ? context.sx.alert : (r.score >= 75 ? context.sx.vital : (r.score >= 55 ? context.sx.mana : context.sx.gold)));
     return [
       SystemWindow(
         title: 'Readiness',
@@ -979,7 +1046,7 @@ class _SystemScreenState extends State<SystemScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(q.toUpperCase(), style: Sx.disp(12.5, color: Sx.mana, spacing: 1.4)),
+                    Text(q.toUpperCase(), style: Sx.disp(12.5, color: context.sx.mana, spacing: 1.4)),
                     Text(a, style: AppTheme.s(14, color: gc.text)),
                   ],
                 ),
@@ -990,7 +1057,7 @@ class _SystemScreenState extends State<SystemScreen> {
       const SizedBox(height: 14),
       SystemWindow(
         title: 'Load management',
-        accent: s.loadSpike ? Sx.gold : Sx.mana,
+        accent: s.loadSpike ? context.sx.gold : context.sx.mana,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1007,7 +1074,7 @@ class _SystemScreenState extends State<SystemScreen> {
               s.loadSpike
                   ? 'Volume is rising faster than your body adapts. Hold here or plan a deload week.'
                   : 'Volume is within a safe range of your recent average.',
-              style: AppTheme.s(13, color: s.loadSpike ? Sx.gold : gc.textSecondary),
+              style: AppTheme.s(13, color: s.loadSpike ? context.sx.gold : gc.textSecondary),
             ),
           ],
         ),
@@ -1015,7 +1082,7 @@ class _SystemScreenState extends State<SystemScreen> {
       const SizedBox(height: 14),
       SystemWindow(
         title: 'Shadow army',
-        accent: Sx.violet,
+        accent: context.sx.violet,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1031,15 +1098,15 @@ class _SystemScreenState extends State<SystemScreen> {
                   children: [
                     SizedBox(
                       width: 92,
-                      child: Text(muscleLabel(m.muscle), style: AppTheme.s(13, color: m.injured ? Sx.alert : gc.text)),
+                      child: Text(muscleLabel(m.muscle), style: AppTheme.s(13, color: m.injured ? context.sx.alert : gc.text)),
                     ),
                     Expanded(
                       child: SystemBar(
                         value: (m.ratio / 2).clamp(0, 1).toDouble(),
                         height: 6,
                         color: m.ratio < HunterRules.shadowBelowMedian
-                            ? Sx.violet
-                            : (m.ratio >= HunterRules.soldierAtMedian ? Sx.mana : Sx.gold),
+                            ? context.sx.violet
+                            : (m.ratio >= HunterRules.soldierAtMedian ? context.sx.mana : context.sx.gold),
                       ),
                     ),
                     SizedBox(
@@ -1059,10 +1126,10 @@ class _SystemScreenState extends State<SystemScreen> {
       const SizedBox(height: 14),
       SystemWindow(
         title: 'Injury & pain log',
-        accent: s.activeInjuries.isEmpty ? Sx.vital : Sx.alert,
+        accent: s.activeInjuries.isEmpty ? context.sx.vital : context.sx.alert,
         trailing: GestureDetector(
           onTap: () => showInjurySheet(context),
-          child: const Icon(PhosphorIconsBold.plus, color: Sx.mana, size: 22),
+          child: Icon(PhosphorIconsBold.plus, color: context.sx.mana, size: 22),
         ),
         child: s.injuries.isEmpty
             ? Text('Nothing logged. Quests avoid areas you log here.', style: AppTheme.s(13.5, color: gc.textSecondary))
@@ -1079,7 +1146,7 @@ class _SystemScreenState extends State<SystemScreen> {
                               Expanded(
                                 child: Text(
                                   '${muscleLabel(i.area)} · ${i.severity}/10',
-                                  style: Sx.disp(16, color: i.severity >= 7 ? Sx.alert : gc.text),
+                                  style: Sx.disp(16, color: i.severity >= 7 ? context.sx.alert : gc.text),
                                 ),
                               ),
                               PopupMenuButton<String>(
@@ -1109,7 +1176,7 @@ class _SystemScreenState extends State<SystemScreen> {
       const SizedBox(height: 14),
       SystemWindow(
         title: 'Safety',
-        accent: Sx.alert,
+        accent: context.sx.alert,
         glow: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1119,7 +1186,7 @@ class _SystemScreenState extends State<SystemScreen> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'Your safety check suggests talking to a clinician before hard training.',
-                  style: AppTheme.s(13.5, color: Sx.gold),
+                  style: AppTheme.s(13.5, color: context.sx.gold),
                 ),
               ),
             Text(
@@ -1145,19 +1212,20 @@ class QuestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final gc = context.gc;
     final color = switch (q.category) {
-      QuestCategory.main => Sx.mana,
-      QuestCategory.bonus => Sx.violet,
-      QuestCategory.recovery || QuestCategory.mobility => Sx.vital,
-      QuestCategory.discipline => Sx.gold,
-      _ => Sx.mana,
+      QuestCategory.main => context.sx.mana,
+      QuestCategory.bonus => context.sx.violet,
+      QuestCategory.recovery || QuestCategory.mobility => context.sx.vital,
+      QuestCategory.discipline => context.sx.gold,
+      _ => context.sx.mana,
     };
     final closed = q.status == QuestStatus.skipped || q.status == QuestStatus.expired;
     return Opacity(
       opacity: closed ? 0.5 : 1,
       child: SystemWindow(
-        accent: q.done ? Sx.vital : color,
+        accent: q.done ? context.sx.vital : color,
         glow: q.category == QuestCategory.main && !q.done,
         onTap: () => showQuestSheet(context, q.id),
+        semanticsLabel: '${q.category.label} quest: ${q.name}. ${questStatusLabel(q)}. ${q.xp} XP.',
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1173,9 +1241,9 @@ class QuestCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                SystemChip(q.difficulty, color: Sx.rank(q.difficulty)),
+                SystemChip(q.difficulty, color: context.sx.rank(q.difficulty)),
                 const Spacer(),
-                Text(questStatusLabel(q), style: AppTheme.s(12, color: q.done ? Sx.vital : gc.textSecondary)),
+                Text(questStatusLabel(q), style: AppTheme.s(12, color: q.done ? context.sx.vital : gc.textSecondary)),
               ],
             ),
             const SizedBox(height: 4),
@@ -1184,13 +1252,13 @@ class QuestCard extends StatelessWidget {
                 Icon(
                   q.done ? PhosphorIconsFill.checkSquare : PhosphorIconsRegular.square,
                   size: 20,
-                  color: q.done ? Sx.vital : gc.textTertiary,
+                  color: q.done ? context.sx.vital : gc.textTertiary,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(q.name, style: Sx.disp(18, color: gc.text, spacing: 0.4)),
                 ),
-                Text('+${q.xp} XP', style: Sx.disp(14, color: Sx.gold)),
+                Text('+${q.xp} XP', style: Sx.disp(14, color: context.sx.gold)),
               ],
             ),
             const SizedBox(height: 4),
@@ -1220,8 +1288,8 @@ class WeeklyCard extends StatelessWidget {
     final gc = context.gc;
     return SystemWindow(
       title: 'Weekly mission · ${m.name}',
-      accent: m.done ? Sx.vital : Sx.gold,
-      trailing: Text('+${m.xp} XP', style: Sx.disp(13, color: Sx.gold)),
+      accent: m.done ? context.sx.vital : context.sx.gold,
+      trailing: Text('+${m.xp} XP', style: Sx.disp(13, color: context.sx.gold)),
       child: Column(
         children: [
           for (final o in m.objectives)
@@ -1232,7 +1300,7 @@ class WeeklyCard extends StatelessWidget {
                   Icon(
                     o.met ? PhosphorIconsFill.checkSquare : PhosphorIconsRegular.square,
                     size: 18,
-                    color: o.met ? Sx.vital : gc.textTertiary,
+                    color: o.met ? context.sx.vital : gc.textTertiary,
                   ),
                   const SizedBox(width: 8),
                   Expanded(

@@ -5,6 +5,7 @@ import 'package:level_up/models/workout.dart';
 import 'package:level_up/services/local_store.dart';
 import 'package:level_up/services/progress_reminder.dart';
 import 'package:level_up/services/train_reminder.dart';
+import 'package:level_up/services/system_reminder.dart';
 import 'package:level_up/state/fit_state.dart';
 import 'package:level_up/system/hunter_catalog.dart';
 import 'package:level_up/system/hunter_engine.dart';
@@ -34,11 +35,11 @@ LoggedSession _stretch(DateTime at, {int min = 15}) => LoggedSession(at, min * 6
     ]);
 
 /// Registers a hunter whose account started [daysAgo] days ago.
-void _register({int daysAgo = 3, int experience = 1, List<String> limits = const []}) {
+void _register({int daysAgo = 3, int experience = 1, String classId = 'hypertrophy', List<String> limits = const []}) {
   hunter.register(
     name: 'Kael',
     experience: experience,
-    classId: 'hypertrophy',
+    classId: classId,
     minutes: 30,
     weeklyTarget: 3,
     limitations: limits,
@@ -75,6 +76,7 @@ void main() {
     await Store.instance.init();
     ProgressReminder.instance.enabled = false;
     TrainReminder.instance.enabled = false;
+    SystemReminder.instance.enabled = false;
     fit.resetAllData();
     fit.onboarded = true;
     hunter.invalidate();
@@ -329,6 +331,47 @@ void main() {
     });
   });
 
+  group('path mechanics', () {
+    test('skill tree order starts with the path\'s tree and contains each tree once', () {
+      expect(skillTreesFor('hypertrophy').first, 'Strength');
+      expect(skillTreesFor('mobility').first, 'Mobility');
+      expect(skillTreesFor('fatloss').first, 'Discipline');
+      expect(skillTreesFor('strength').first, 'Strength');
+      expect(skillTreesFor('endurance').first, 'Endurance');
+      for (final c in kHunterClasses) {
+        final trees = skillTreesFor(c.id);
+        expect(trees.toSet().length, trees.length, reason: c.id);
+        expect(trees.contains(c.tree), isTrue, reason: c.id);
+      }
+    });
+
+    test('each class maps to a matching program template', () {
+      expect(hunterClassById('hypertrophy').program, 'ppl');
+      expect(hunterClassById('strength').program, 'stronglifts');
+      expect(hunterClassById('endurance').program, 'fullbody');
+      expect(hunterClassById('fatloss').program, 'home');
+      expect(hunterClassById('mobility').program, 'rr');
+    });
+
+    test('weekly mission names are class-shaped', () {
+      for (final (id, expected) in const [
+        ('hypertrophy', 'Volume Week'),
+        ('strength', 'Heavy Week'),
+        ('endurance', 'Ranger Week'),
+        ('fatloss', 'Shadow Week'),
+        ('mobility', 'Monk Week'),
+      ]) {
+        _register(daysAgo: 0, classId: id);
+        hunter.invalidate();
+        expect(
+          hunter.status.weekly.firstWhere((m) => m.id == 'mission_a').name,
+          expected,
+          reason: id,
+        );
+      }
+    });
+  });
+
   group('rank progression', () {
     test('rank level bands and promotion requirements from the spec', () {
       expect([for (final r in kRanks) '${r.letter}${r.minLevel}-${r.maxLevel}'],
@@ -534,6 +577,119 @@ void main() {
       fit.resetAllData();
       hunter.invalidate();
       expect(hunter.status.registered, isFalse);
+    });
+  });
+
+  group('quests follow how the hunter feels', () {
+    test('a low check-in after the board exists rebuilds the untouched quests', () {
+      _register(experience: 2);
+      final before = hunter.status.todayQuests.firstWhere((q) => q.category == QuestCategory.main);
+      expect(before.name, isNot('Active Recovery'));
+      hunter.logCheckIn(energy: 1, soreness: 5, stress: 5, pain: true, sleep: 4);
+      final after = hunter.status.todayQuests;
+      expect(after.firstWhere((q) => q.category == QuestCategory.main).name, 'Active Recovery');
+      expect(after.firstWhere((q) => q.category == QuestCategory.side).name, 'Loosen Up');
+      expect(after.map((q) => q.id).toSet().length, after.length, reason: 'no duplicated quests');
+    });
+
+    test('a quest already accepted is kept when the board is rebuilt', () {
+      _register(experience: 2);
+      final main = hunter.status.todayQuests.firstWhere((q) => q.category == QuestCategory.main);
+      hunter.acceptQuest(main.id);
+      hunter.logCheckIn(energy: 1, soreness: 5, stress: 5, pain: false, sleep: 4);
+      final kept = hunter.status.todayQuests.firstWhere((q) => q.category == QuestCategory.main);
+      expect(kept.name, main.name);
+      expect(kept.status, QuestStatus.accepted);
+    });
+
+    test('a recovery day never offers extra training volume as a bonus', () {
+      _register(experience: 2);
+      hunter.logCheckIn(energy: 1, soreness: 5, stress: 5, pain: true, sleep: 4);
+      for (final q in hunter.status.todayQuests.where((q) => q.category == QuestCategory.bonus)) {
+        expect(q.check, 'steps');
+      }
+    });
+
+    test('a shoulder limitation never gets the push-up bonus', () {
+      _register(limits: ['Shoulders']);
+      for (final q in hunter.status.todayQuests.where((q) => q.category == QuestCategory.bonus)) {
+        expect(q.check, isNot('pushReps'));
+      }
+    });
+
+    test('an attempt below the minimum leaves the quest open and unpaid', () {
+      _register();
+      final q = hunter.status.todayQuests.firstWhere((q) => q.category == QuestCategory.main);
+      hunter.acceptQuest(q.id);
+      final first = q.objectives.first;
+      fit.sessions.add(LoggedSession(DateTime.now(), 300, [
+        LoggedExercise(first.exerciseId, first.name, 'chest', [LoggedSet(first.reps ?? 10, 0)]),
+      ], routineId: 'quest:${q.id}'));
+      hunter.invalidate();
+      final tried = hunter.status.todayQuests.firstWhere((x) => x.id == q.id);
+      expect(tried.done, isFalse);
+      expect(_xpOf('quest:${q.id}'), 0);
+      fit.sessions.add(_doQuest(q, DateTime.now().add(const Duration(minutes: 1))));
+      hunter.invalidate();
+      expect(hunter.status.todayQuests.firstWhere((x) => x.id == q.id).status, QuestStatus.completed);
+      expect(_xpOf('quest:${q.id}'), q.xp);
+    });
+  });
+
+  group('weekly missions are paid once', () {
+    test('changing the first day of the week does not pay past weeks again', () {
+      _register(daysAgo: 40);
+      for (var d = 1; d <= 35; d++) {
+        fit.sessions.add(_strength(_ago(d)));
+      }
+      hunter.invalidate();
+      final paid = _xpOf('weekly:');
+      final total = hunter.status.totalXp;
+      fit.weekStartDay = fit.weekStartDay == 1 ? 7 : 1;
+      hunter.invalidate();
+      expect(_xpOf('weekly:'), paid);
+      expect(hunter.status.totalXp, total);
+    });
+  });
+
+  group('records and comebacks', () {
+    test('moving a logged workout to another time does not pay its record again', () {
+      _register(daysAgo: 10);
+      fit.sessions.add(_strength(_ago(3), kg: 60));
+      fit.sessions.add(_strength(_ago(1, hour: 18), kg: 80));
+      hunter.invalidate();
+      final paid = _xpOf('pr:');
+      expect(paid, greaterThan(0));
+      final moved = fit.sessions.removeLast();
+      fit.sessions.add(LoggedSession(_ago(1, hour: 20), moved.durationSec, moved.exercises));
+      hunter.invalidate();
+      expect(_xpOf('pr:'), paid);
+    });
+
+    test('sports never fill a strength slot in a quest', () {
+      _register();
+      const sports = {'dance', 'football', 'basketball', 'tennis', 'golf'};
+      for (final q in hunter.status.todayQuests) {
+        for (final o in q.objectives) {
+          expect(sports.contains(o.exerciseId), isFalse, reason: '${q.name}: ${o.name}');
+        }
+      }
+    });
+
+    test('a finished comeback plan gives the weekly target back', () {
+      _register(daysAgo: 40);
+      fit.sessions.add(_strength(_ago(30)));
+      hunter.invalidate();
+      expect(hunter.status.comebackDue, isTrue);
+      hunter.acceptComeback('Travel');
+      expect(hunter.status.player!.weeklyTarget, 2);
+      final plans = [
+        for (final c in fit.hunterData['comebacks'] as List)
+          {...(c as Map).cast<String, dynamic>(), 'start': dayKey(_ago(20)), 'until': dayKey(_ago(1))},
+      ];
+      fit.hunterData['comebacks'] = plans;
+      hunter.invalidate();
+      expect(hunter.status.player!.weeklyTarget, 3);
     });
   });
 }

@@ -586,8 +586,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver, Single
   String? _compactTitle() => switch (fit.route) {
         'home' => t.longDate(DateTime.now()),
         'progress' => t.progress,
-        'system' => 'System',
-        'training' => 'Training',
+        'system' => 'Hunter',
+        'training' => titleCase(t.train),
         'exercises' => t.exercises,
         'preferences' => t.settings,
         'routines' => t.routines,
@@ -831,9 +831,9 @@ class _NavBar extends StatefulWidget {
 
 class _NavBarState extends State<_NavBar> {
   static const height = 68.0;
-  static const _iw = 58.0;
-  static const _fabW = 48.0;
-  static const _routes = ['home', 'progress', 'exercises', 'settings'];
+  static const _iw = 46.0;
+  static const _fabW = 38.0;
+  static const _routes = ['home', 'training', 'system', 'progress', 'settings'];
 
   double? _dragX;
   int? _hover;
@@ -851,14 +851,15 @@ class _NavBarState extends State<_NavBar> {
         0 => 0,
         1 => _iw + _gap,
         2 => 2 * _iw + 3 * _gap + _fabW,
-        _ => 3 * _iw + 4 * _gap + _fabW,
+        3 => 3 * _iw + 4 * _gap + _fabW,
+        _ => 4 * _iw + 5 * _gap + _fabW,
       };
 
-  void _go(int i) => [fit.goHome, fit.goProgress, fit.goExercises, fit.goSettings][i]();
+  void _go(int i) => [fit.goHome, fit.goTrain, fit.goSystem, fit.goProgress, fit.goSettings][i]();
 
   int _nearest(double x) {
     var best = 0;
-    for (var i = 1; i < 4; i++) {
+    for (var i = 1; i < 5; i++) {
       if ((_slotX(i) + _iw / 2 - x).abs() < (_slotX(best) + _iw / 2 - x).abs()) best = i;
     }
     return best;
@@ -893,7 +894,7 @@ class _NavBarState extends State<_NavBar> {
     return LayoutBuilder(
         builder: (context, c) {
           _slotW = c.maxWidth - 28;
-          _gap = ((_slotW - 4 * _iw - _fabW) / 4).clamp(0.0, 40.0);
+          _gap = ((_slotW - 5 * _iw - _fabW) / 5).clamp(0.0, 40.0);
           final drag = _dragX;
 
           return Stack(
@@ -910,7 +911,7 @@ class _NavBarState extends State<_NavBar> {
                   child: GlassSurface(
                     radius: h / 2,
                     blur: 30,
-                    tint: fit.dark ? const Color(0xFF131313).withValues(alpha: 0.72) : null,
+                    tint: fit.dark ? gc.bgRaised2.withValues(alpha: 0.86) : null,
                     child: const SizedBox.expand(),
                   ),
                 ),
@@ -924,7 +925,7 @@ class _NavBarState extends State<_NavBar> {
                   left: _slotX(_selectedIndex) - _gap * 0.2,
                   dragLeft: drag == null ? null : drag - _iw / 2 - _gap * 0.2,
                   width: _iw + _gap * 0.4,
-                  color: gc.text.withValues(alpha: fit.dark ? 0.13 : 0.08),
+                  color: gc.accent.withValues(alpha: fit.dark ? 0.16 : 0.10),
                 ),
               ),
               Positioned(
@@ -952,13 +953,16 @@ class _NavBarState extends State<_NavBar> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _item(context, 0, PhosphorIconsRegular.lightning, PhosphorIconsFill.lightning, 'HUNTER', fit.goHome),
-                      _item(context, 1, PhosphorIconsRegular.chartLineUp, PhosphorIconsFill.chartLineUp, t.progress,
-                          fit.goProgress),
+                      _item(context, 0, PhosphorIconsRegular.house, PhosphorIconsFill.house, 'Home',
+                          fit.goHome),
+                      _item(context, 1, PhosphorIconsRegular.barbell, PhosphorIconsFill.barbell, 'Train',
+                          fit.goTrain),
                       _fab(context),
-                      _item(context, 2, PhosphorIconsRegular.barbell, PhosphorIconsFill.barbell, t.exercises,
-                          fit.goExercises),
-                      _item(context, 3, PhosphorIconsRegular.userCircle, PhosphorIconsFill.userCircle, t.profile.toUpperCase(),
+                      _item(context, 2, PhosphorIconsRegular.shieldChevron, PhosphorIconsFill.shieldChevron, 'Hunter',
+                          fit.goSystem),
+                      _item(context, 3, PhosphorIconsRegular.chartLineUp, PhosphorIconsFill.chartLineUp, 'Progress',
+                          fit.goProgress),
+                      _item(context, 4, PhosphorIconsRegular.userCircle, PhosphorIconsFill.userCircle, 'Profile',
                           fit.goSettings),
                     ],
                   ),
@@ -1006,11 +1010,34 @@ class _NavBarState extends State<_NavBar> {
               tween: Tween(begin: selected ? 1 : 0, end: selected ? 1 : 0),
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
-              builder: (context, v, _) => Stack(
-                alignment: Alignment.center,
+              builder: (context, v, _) => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Opacity(opacity: 0.7 * (1 - v), child: Icon(icon, size: 24, color: gc.text)),
-                  Opacity(opacity: v, child: Icon(iconFill, size: 24, color: gc.text)),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Opacity(opacity: 0.7 * (1 - v), child: Icon(icon, size: 22, color: gc.text)),
+                      Opacity(opacity: v, child: Icon(iconFill, size: 22, color: gc.accent)),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  // The bar is a fixed 68 px tall: the caption stays at its drawn
+                  // size and the full name is announced through Semantics above.
+                  ExcludeSemantics(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.visible,
+                      textScaler: TextScaler.noScaling,
+                      style: AppTheme.f(
+                        9.5,
+                        weight: FontWeight.w700,
+                        color: Color.lerp(gc.textSecondary, gc.accent, v),
+                        height: 1,
+                      ).copyWith(decoration: TextDecoration.none),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1024,7 +1051,10 @@ class _NavBarState extends State<_NavBar> {
 
   Widget _fab(BuildContext context) {
     final gc = context.gc;
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: 'Start workout',
+      child: GestureDetector(
       onTap: () => _play(context),
       onLongPress: () => showStartSheet(context),
       child: Container(
@@ -1034,14 +1064,15 @@ class _NavBarState extends State<_NavBar> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [gc.accent, gc.brass],
+            colors: [gc.ember, gc.emberDeep],
           ),
           shape: BoxShape.circle,
           boxShadow: [
-            BoxShadow(color: gc.accent.withValues(alpha: 0.45), blurRadius: 18, offset: const Offset(0, 6)),
+            BoxShadow(color: gc.emberDeep.withValues(alpha: 0.28), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
-        child: Icon(PhosphorIconsFill.play, size: 21, color: gc.bg),
+        child: Icon(PhosphorIconsFill.play, size: 21, color: gc.onEmber),
+      ),
       ),
     );
   }

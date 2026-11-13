@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 void celebrate(BuildContext context, {required List<Color> colors}) {
@@ -17,7 +18,15 @@ void celebrate(BuildContext context, {required List<Color> colors}) {
       child: Confetti(colors: colors, onDone: () => entry.remove()),
     ),
   );
-  overlay.insert(entry);
+  // Defer the overlay insertion when called during the build phase so that
+  // OverlayState.setState() is not invoked while another widget is building.
+  if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (overlay.mounted) overlay.insert(entry);
+    });
+  } else {
+    overlay.insert(entry);
+  }
 }
 
 class Confetti extends StatefulWidget {

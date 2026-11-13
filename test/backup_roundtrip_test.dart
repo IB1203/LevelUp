@@ -13,6 +13,7 @@ import 'package:level_up/services/local_store.dart';
 import 'package:level_up/services/media_store.dart';
 import 'package:level_up/services/progress_reminder.dart';
 import 'package:level_up/services/train_reminder.dart';
+import 'package:level_up/services/system_reminder.dart';
 import 'package:level_up/state/fit_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,6 +35,7 @@ void main() {
     MediaStore.directory = tmp.path;
     ProgressReminder.instance.enabled = false;
     TrainReminder.instance.enabled = false;
+    SystemReminder.instance.enabled = false;
     fit.resetAllData();
   });
 

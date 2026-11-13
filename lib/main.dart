@@ -14,6 +14,7 @@ import 'services/media_store.dart';
 import 'services/rest_alarm.dart';
 import 'services/screen_awake.dart';
 import 'state/fit_state.dart';
+import 'system/hunter_engine.dart';
 import 'wear/wear_app.dart';
 
 Future<void> main() async {
@@ -36,6 +37,7 @@ Future<void> main() async {
   fit.syncPhotoReminder();
   fit.syncMeasureReminder();
   fit.syncTrainReminder();
+  hunter.syncSystemReminders();
 
   final watch = await DeviceKind.isWatch();
   _onWatch = watch;

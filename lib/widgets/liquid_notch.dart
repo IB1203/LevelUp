@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../services/beeper.dart';
 import '../theme/app_theme.dart';
@@ -378,7 +379,17 @@ class _ToastSession {
     final key = GlobalKey<_ToastHostState>();
     hostKey = key;
     entry = OverlayEntry(builder: (_) => _ToastHost(key: key, session: this, request: request));
-    overlay.insert(entry!);
+    // Inserting an OverlayEntry calls OverlayState.setState(), which throws if the
+    // framework is mid-build and the overlay is not an ancestor of the widget being
+    // built. Defer to the next frame so callers can safely show toasts from
+    // initState / didUpdateWidget / build.
+    if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (entry != null && overlay.mounted) overlay.insert(entry!);
+      });
+    } else {
+      overlay.insert(entry!);
+    }
   }
 
   void finished(_ToastRequest request) {

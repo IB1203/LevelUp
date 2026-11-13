@@ -68,8 +68,21 @@ mixin LibraryState on FitCore {
     notifyListeners();
   }
 
+  List<Exercise>? _indexedList;
+  Map<String, Exercise> _builtInIndex = const {};
+
+  /// Looked up on every row of every list, so the built-in catalogue is indexed
+  /// once instead of copying and scanning all of it per call.
   Exercise? exerciseById(String id) {
-    for (final e in allExercises) {
+    if (_builtInExercises == null) allExercises;
+    final built = _builtInExercises!;
+    if (!identical(built, _indexedList)) {
+      _builtInIndex = {for (final e in built.reversed) e.id: e};
+      _indexedList = built;
+    }
+    final hit = _builtInIndex[id];
+    if (hit != null) return hit;
+    for (final e in customExercises) {
       if (e.id == id) return e;
     }
     return null;

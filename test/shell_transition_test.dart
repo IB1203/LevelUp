@@ -6,6 +6,7 @@ import 'package:level_up/models/workout.dart';
 import 'package:level_up/system/hunter_home.dart';
 import 'package:level_up/services/local_store.dart';
 import 'package:level_up/services/progress_reminder.dart';
+import 'package:level_up/services/system_reminder.dart';
 import 'package:level_up/state/fit_state.dart';
 import 'package:level_up/widgets/award_celebration.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,6 +18,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await Store.instance.init();
     ProgressReminder.instance.enabled = false;
+    SystemReminder.instance.enabled = false;
     setAppLanguage('es');
     fit.onboarded = true;
     fit.session = null;
@@ -103,18 +105,18 @@ void main() {
     await tester.pumpWidget(const LevelUpApp());
     await tester.pump();
 
-    final home = tester.getCenter(find.bySemanticsLabel('HUNTER'));
-    final profile = tester.getCenter(find.bySemanticsLabel(t.profile.toUpperCase()));
+    final home = tester.getCenter(find.bySemanticsLabel('Home'));
+    final system = tester.getCenter(find.bySemanticsLabel('Train'));
     final gesture = await tester.startGesture(home);
     await tester.pump(const Duration(milliseconds: 700));
     for (var i = 1; i <= 10; i++) {
-      await gesture.moveTo(Offset.lerp(home, profile, i / 10)!);
+      await gesture.moveTo(Offset.lerp(home, system, i / 10)!);
       await tester.pump(const Duration(milliseconds: 16));
     }
     expect(fit.route, 'home');
     await gesture.up();
     await tester.pump();
-    expect(fit.route, 'settings');
+    expect(fit.route, 'training');
     await tester.pump(const Duration(seconds: 1));
   });
 }

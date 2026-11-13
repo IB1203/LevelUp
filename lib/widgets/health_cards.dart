@@ -259,6 +259,34 @@ class HealthScreen extends StatelessWidget {
                   style: AppTheme.f(32, weight: FontWeight.w800, color: gc.text, letterSpacing: -0.9, height: 1.05)),
               const SizedBox(height: 4),
               Text(health(t.healthFrom), style: AppTheme.f(13, weight: FontWeight.w500, color: gc.textSecondary)),
+              if (shown.isEmpty && !fit.stepsOn)
+                Padding(
+                  padding: const EdgeInsets.only(top: 24),
+                  child: SoftCard(
+                    radius: 22,
+                    borderColor: Colors.transparent,
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Icon(PhosphorIconsRegular.heartbeat, size: 28, color: gc.textTertiary),
+                        const SizedBox(height: 12),
+                        Text('No health data to show',
+                            textAlign: TextAlign.center,
+                            style: AppTheme.f(16, weight: FontWeight.w800, color: gc.text)),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Nothing is estimated or filled in here. Choose which measurements to read '
+                          'from your phone and they will appear once access is granted.',
+                          textAlign: TextAlign.center,
+                          style: AppTheme.f(13, weight: FontWeight.w500, color: gc.textSecondary, height: 1.35),
+                        ),
+                        const SizedBox(height: 16),
+                        PrimaryButton(label: t.healthPickTitle, height: 48, onTap: () => showHealthPicker(context)),
+                      ],
+                    ),
+                  ),
+                ),
               for (final g in HealthGroup.values)
                 if (shown.any((m) => m.group == g) || (g == HealthGroup.activity && fit.stepsOn))
                   Column(

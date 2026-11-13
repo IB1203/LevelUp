@@ -7,27 +7,76 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ui_kit.dart';
 
-/// Hunter accents on top of the theme tokens. Everything else follows the
-/// GymMane design language: rounded soft cards, Nunito, pill controls.
-class Sx {
-  const Sx._();
-  static const mana = Color(0xFF5CC8FF);
-  static const violet = Color(0xFF9B8CFF);
-  static const gold = Color(0xFFF4C95D);
-  static const vital = Color(0xFF5EE6B0);
-  static const alert = Color(0xFFFF6B81);
+/// Hunter accent colours on top of the theme tokens.
+///
+/// The neon arcade palette only clears WCAG AA against the dark surfaces, so
+/// light mode swaps in deeper variants of the same hues. Resolve it through
+/// `context.sx` instead of hard-coding a colour.
+@immutable
+class HunterPalette {
+  const HunterPalette({
+    required this.mana,
+    required this.violet,
+    required this.gold,
+    required this.vital,
+    required this.alert,
+    required this.muted,
+    required this.holo,
+  });
 
-  static Color rank(String letter) => switch (letter) {
-    'E' => const Color(0xFF93A1C8),
+  final Color mana;
+  final Color violet;
+  final Color gold;
+  final Color vital;
+  final Color alert;
+
+  /// Neutral grey-blue shared by E-rank, common rarity and the basic frame.
+  final Color muted;
+
+  /// Cool cyan: the holographic frame and C-rank, so rank colours stay distinct
+  /// from the coral action colour.
+  final Color holo;
+
+  static const dark = HunterPalette(
+    mana: Color(0xFFFF7A45),
+    violet: Color(0xFF8B9BFF),
+    gold: Color(0xFFF4C95D),
+    vital: Color(0xFF35D49A),
+    alert: Color(0xFFFF6B81),
+    muted: Color(0xFFA3ADC2),
+    holo: Color(0xFF5CC8FF),
+  );
+
+  static const light = HunterPalette(
+    mana: Color(0xFFA83B0A),
+    violet: Color(0xFF5B4BD6),
+    gold: Color(0xFF7A5600),
+    vital: Color(0xFF0A6E4F),
+    alert: Color(0xFFB3182E),
+    muted: Color(0xFF4A5678),
+    holo: Color(0xFF1A5FB4),
+  );
+
+  Color rank(String letter) => switch (letter) {
+    'E' => muted,
     'D' => vital,
-    'C' => mana,
+    'C' => holo,
     'B' => violet,
     'A' => gold,
     'S' => alert,
     _ => mana,
   };
+}
 
-  /// Display text in GymMane's type: Nunito, heavy, tight tracking.
+extension HunterPaletteX on BuildContext {
+  /// Accent palette that matches the current brightness.
+  HunterPalette get sx => fitDark(this) ? HunterPalette.dark : HunterPalette.light;
+}
+
+/// Display text in the Hunter System's type: rounded, heavy, tight tracking.
+class Sx {
+  const Sx._();
+
   static TextStyle disp(double size, {Color? color, FontWeight weight = FontWeight.w800, double spacing = 0}) =>
       AppTheme.f(
         size,
@@ -38,31 +87,36 @@ class Sx {
       );
 }
 
-/// A GymMane soft card. [title] renders as a small section label with an
+/// A soft Hunter System card. [title] renders as a small section label with an
 /// accent dot; [glow] marks the card as the one that needs attention.
 class SystemWindow extends StatelessWidget {
   const SystemWindow({
     super.key,
     required this.child,
     this.title,
-    this.accent = Sx.mana,
+    this.accent,
     this.padding = const EdgeInsets.fromLTRB(18, 16, 18, 18),
     this.onTap,
     this.trailing,
     this.glow = false,
+    this.semanticsLabel,
   });
 
   final Widget child;
   final String? title;
-  final Color accent;
+  final Color? accent;
   final EdgeInsets padding;
   final VoidCallback? onTap;
   final Widget? trailing;
   final bool glow;
 
+  /// Screen-reader label for tappable windows and compact tiles.
+  final String? semanticsLabel;
+
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
+    final accent = this.accent ?? context.sx.mana;
     final card = SoftCard(
       radius: 22,
       padding: padding,
@@ -92,7 +146,15 @@ class SystemWindow extends StatelessWidget {
         ],
       ),
     );
-    return onTap == null ? card : Pressable(onTap: onTap, child: card);
+    final widget = onTap == null ? card : Pressable(onTap: onTap, child: card);
+    if (semanticsLabel == null) return widget;
+    return Semantics(
+      container: true,
+      button: true,
+      label: semanticsLabel,
+      excludeSemantics: true,
+      child: widget,
+    );
   }
 }
 
@@ -100,22 +162,29 @@ bool fitDark(BuildContext context) => Theme.of(context).brightness == Brightness
 
 /// The rank badge: a rounded hexagon with the rank letter.
 class RankEmblem extends StatelessWidget {
-  const RankEmblem({super.key, required this.letter, this.size = 64});
+  const RankEmblem({super.key, required this.letter, this.size = 64, this.semanticsLabel});
   final String letter;
   final double size;
+  final String? semanticsLabel;
 
   @override
   Widget build(BuildContext context) {
-    final c = Sx.rank(letter);
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _HexPainter(c, context.gc.bgRaised2),
-        child: Center(
-          child: Text(
-            letter,
-            style: AppTheme.f(size * 0.44, weight: FontWeight.w900, color: c),
+    final c = context.sx.rank(letter);
+    return Semantics(
+      container: true,
+      image: true,
+      label: semanticsLabel ?? '$letter rank emblem',
+      excludeSemantics: true,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(
+          painter: _HexPainter(c, context.gc.bgRaised2),
+          child: Center(
+            child: Text(
+              letter,
+              style: AppTheme.f(size * 0.44, weight: FontWeight.w900, color: c),
+            ),
           ),
         ),
       ),
@@ -154,31 +223,38 @@ class _HexPainter extends CustomPainter {
   bool shouldRepaint(_HexPainter old) => old.color != color || old.fill != fill;
 }
 
-/// GymMane-style rounded progress bar.
+/// Rounded Hunter System progress bar.
 class SystemBar extends StatelessWidget {
-  const SystemBar({super.key, required this.value, this.color = Sx.mana, this.height = 7});
+  const SystemBar({super.key, required this.value, this.color, this.height = 7, this.semanticsLabel});
   final double value;
-  final Color color;
+  final Color? color;
   final double height;
+  final String? semanticsLabel;
 
   @override
   Widget build(BuildContext context) {
     final gc = context.gc;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(100),
-      child: Container(
-        height: height,
-        color: gc.mutedFill,
-        alignment: Alignment.centerLeft,
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: value.clamp(0.0, 1.0)),
-          duration: const Duration(milliseconds: 650),
-          curve: Curves.easeOutCubic,
-          builder: (context, v, _) => FractionallySizedBox(
-            widthFactor: v,
-            heightFactor: 1,
-            child: DecoratedBox(
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(100)),
+    final color = this.color ?? context.sx.mana;
+    return Semantics(
+      label: semanticsLabel ?? 'Progress',
+      value: '${(value.clamp(0.0, 1.0) * 100).round()}%',
+      excludeSemantics: true,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(100),
+        child: Container(
+          height: height,
+          color: gc.mutedFill,
+          alignment: Alignment.centerLeft,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: value.clamp(0.0, 1.0)),
+            duration: const Duration(milliseconds: 650),
+            curve: Curves.easeOutCubic,
+            builder: (context, v, _) => FractionallySizedBox(
+              widthFactor: v,
+              heightFactor: 1,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(100)),
+              ),
             ),
           ),
         ),
@@ -187,7 +263,7 @@ class SystemBar extends StatelessWidget {
   }
 }
 
-/// Small label + big value, like GymMane's stat cells.
+/// Small label + big value, like the System stat cells.
 class StatTile extends StatelessWidget {
   const StatTile(this.label, this.value, {super.key, this.color});
   final String label;
@@ -213,56 +289,60 @@ class StatTile extends StatelessWidget {
 
 /// A small pill tag.
 class SystemChip extends StatelessWidget {
-  const SystemChip(this.text, {super.key, this.color = Sx.mana});
+  const SystemChip(this.text, {super.key, this.color});
   final String text;
-  final Color color;
+  final Color? color;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-    decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(100)),
-    child: Text(
-      titleCase(text),
-      style: AppTheme.f(11.5, weight: FontWeight.w700, color: color),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final color = this.color ?? context.sx.mana;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(100)),
+      child: Text(
+        titleCase(text),
+        style: AppTheme.f(11.5, weight: FontWeight.w700, color: color),
+      ),
+    );
+  }
 }
 
 /// Badge glyphs for achievements (names come from the catalog).
+/// Achievement glyphs, from the same icon family as the rest of the app.
 IconData badgeIcon(String name) => switch (name) {
-  'star' => Icons.star_rounded,
-  'bolt' => Icons.bolt_rounded,
-  'fitness' => Icons.fitness_center_rounded,
-  'run' => Icons.directions_run_rounded,
-  'walk' => Icons.directions_walk_rounded,
-  'spa' => Icons.spa_rounded,
-  'calendar' => Icons.event_available_rounded,
-  'trophy' => Icons.emoji_events_rounded,
-  'shield' => Icons.shield_rounded,
-  'replay' => Icons.replay_rounded,
-  'up' => Icons.trending_up_rounded,
-  'flag' => Icons.flag_rounded,
-  _ => Icons.military_tech_rounded,
+  'star' => PhosphorIconsFill.star,
+  'bolt' => PhosphorIconsFill.lightning,
+  'fitness' => PhosphorIconsFill.barbell,
+  'run' => PhosphorIconsFill.personSimpleRun,
+  'walk' => PhosphorIconsFill.personSimpleWalk,
+  'spa' => PhosphorIconsFill.flowerLotus,
+  'calendar' => PhosphorIconsFill.calendarCheck,
+  'trophy' => PhosphorIconsFill.trophy,
+  'shield' => PhosphorIconsFill.shield,
+  'replay' => PhosphorIconsFill.arrowCounterClockwise,
+  'up' => PhosphorIconsFill.trendUp,
+  'flag' => PhosphorIconsFill.flag,
+  _ => PhosphorIconsFill.medal,
 };
 
-Color rarityColor(String rarity) => switch (rarity) {
-  'common' => const Color(0xFF93A1C8),
-  'uncommon' => Sx.vital,
-  'rare' => Sx.mana,
-  'epic' => Sx.violet,
-  'legendary' => Sx.gold,
-  _ => Sx.mana,
+Color rarityColor(String rarity, HunterPalette sx) => switch (rarity) {
+  'common' => sx.muted,
+  'uncommon' => sx.vital,
+  'rare' => sx.mana,
+  'epic' => sx.violet,
+  'legendary' => sx.gold,
+  _ => sx.mana,
 };
 
 /// Colour of a cosmetic profile frame.
-Color frameColor(String id) => switch (id) {
-  'verdant' => Sx.vital,
-  'azure' => Sx.mana,
-  'violet' => Sx.violet,
-  'gilded' => Sx.gold,
-  'crimson' => Sx.alert,
-  'holo' => const Color(0xFF7DF9FF),
-  _ => const Color(0xFF93A1C8),
+Color frameColor(String id, HunterPalette sx) => switch (id) {
+  'verdant' => sx.vital,
+  'azure' => sx.holo,
+  'violet' => sx.violet,
+  'gilded' => sx.gold,
+  'crimson' => sx.alert,
+  'holo' => sx.holo,
+  _ => sx.muted,
 };
 
 /// A ring frame around the rank emblem; the holographic frame shimmers.
@@ -298,7 +378,8 @@ class _FramedEmblemState extends State<FramedEmblem> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    final c = frameColor(widget.frame);
+    final sx = context.sx;
+    final c = frameColor(widget.frame, sx);
     return AnimatedBuilder(
       animation: _c,
       builder: (context, child) => Container(
@@ -309,7 +390,7 @@ class _FramedEmblemState extends State<FramedEmblem> with SingleTickerProviderSt
           gradient: SweepGradient(
             transform: GradientRotation(_c.value * 2 * math.pi),
             colors: widget.frame == 'holo'
-                ? const [Color(0xFF7DF9FF), Sx.violet, Sx.gold, Color(0xFF7DF9FF)]
+                ? [sx.holo, sx.violet, sx.gold, sx.holo]
                 : [c, c.withValues(alpha: 0.35), c],
           ),
         ),

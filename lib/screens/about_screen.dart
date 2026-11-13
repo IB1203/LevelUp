@@ -13,7 +13,7 @@ import '../widgets/ui_kit.dart';
 const kAppVersion = '2.1.0';
 const _kAuthor = 'InlitX';
 const _kAuthorUrl = 'https://github.com/InlitX';
-const _kRepoUrl = 'https://github.com/InlitX/GymMane';
+const _kRepoUrl = 'https://github.com/IB1203/LevelUp';
 const _kKofiUrl = 'https://ko-fi.com/inlitx';
 
 class AboutScreen extends StatelessWidget {
@@ -191,6 +191,11 @@ class AboutScreen extends StatelessWidget {
       (PhosphorIconsFill.heart, t.madeWithLoveBy, _kAuthor, _kAuthorUrl, gc.accent),
       (PhosphorIconsRegular.githubLogo, t.sourceCode, 'InlitX/GymMane', _kRepoUrl, null),
       (PhosphorIconsRegular.coffee, t.buyCoffee, 'ko-fi.com/inlitx', _kKofiUrl, null),
+      // CC BY-SA 4.0 asks for attribution where the work is shown, not only in the repo.
+      (PhosphorIconsRegular.personSimpleTaiChi, 'Exercise illustrations · CC BY-SA 4.0', 'Workout Guide by Bryl Lim',
+          'https://github.com/bryllim/workout-guide', null),
+      (PhosphorIconsRegular.personSimpleTaiChi, 'Pose artwork · CC BY-SA 4.0', 'Everkinetic',
+          'https://github.com/everkinetic/data', null),
     ];
     return Container(
       clipBehavior: Clip.antiAlias,

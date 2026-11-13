@@ -42,6 +42,7 @@ import '../services/supplement_reminder.dart';
 import '../services/train_reminder.dart';
 import '../services/voice_coach.dart';
 import '../services/workout_import.dart';
+import '../system/hunter_engine.dart';
 
 part 'awards_state.dart';
 part 'circuit_state.dart';
@@ -79,7 +80,7 @@ class FitState extends FitCore
     }
   }
 
-  static const _soundChannels = ['train_reminder', 'supplement_reminder', 'fasting', 'progress_photo', 'measures'];
+  static const _soundChannels = ['train_reminder', 'supplement_reminder', 'fasting', 'progress_photo', 'measures', 'system_reminder'];
 
   Future<void> setNotifSound(SoundGroup g, String uri, {String name = ''}) async {
     if (uri.isEmpty) {
@@ -97,11 +98,13 @@ class FitState extends FitCore
       NotifSound.channelOf('fasting', SoundGroup.food),
       NotifSound.channelOf('progress_photo', SoundGroup.other),
       NotifSound.channelOf('measures', SoundGroup.other),
+      NotifSound.channelOf('system_reminder', SoundGroup.train),
       'fasting_live',
     });
     switch (g) {
       case SoundGroup.train:
         syncTrainReminder();
+        hunter.syncSystemReminders();
       case SoundGroup.food:
         syncSupplementReminder();
         _syncFast();
@@ -1419,8 +1422,11 @@ class FitState extends FitCore
         backFromAwards();
       case 'ai-plan':
         backFromAiPlan();
-      case 'progress':
       case 'exercises':
+        popRoute(fallback: 'training');
+      case 'progress':
+      case 'training':
+      case 'system':
       case 'settings':
         goHome();
       case 'home':

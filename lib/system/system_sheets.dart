@@ -23,7 +23,7 @@ Widget sheetTitle(BuildContext context, String kicker, String title) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      SectionLabel(kicker, color: Sx.mana),
+      SectionLabel(kicker, color: context.sx.mana),
       const SizedBox(height: 4),
       Text(
         title,
@@ -111,11 +111,11 @@ class _QuestSheet extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: [
-                SystemChip('${q.difficulty}-Rank', color: Sx.rank(q.difficulty)),
-                SystemChip(questStatusLabel(q), color: q.done ? Sx.vital : Sx.mana),
-                if (q.minutes > 0) SystemChip('~${q.minutes} min', color: Sx.violet),
-                if (q.shortened) const SystemChip('Shortened', color: Sx.gold),
-                if (q.rescheduled) const SystemChip('Rescheduled', color: Sx.gold),
+                SystemChip('${q.difficulty}-Rank', color: context.sx.rank(q.difficulty)),
+                SystemChip(questStatusLabel(q), color: q.done ? context.sx.vital : context.sx.mana),
+                if (q.minutes > 0) SystemChip('~${q.minutes} min', color: context.sx.violet),
+                if (q.shortened) SystemChip('Shortened', color: context.sx.gold),
+                if (q.rescheduled) SystemChip('Rescheduled', color: context.sx.gold),
               ],
             ),
             const SizedBox(height: 12),
@@ -152,7 +152,7 @@ class _QuestSheet extends StatelessWidget {
             const SizedBox(height: 16),
             SystemWindow(
               title: 'Reward',
-              accent: Sx.gold,
+              accent: context.sx.gold,
               glow: false,
               child: Text(
                 '${q.xp} XP${q.attrXp.isEmpty ? '' : ' · ${attrRewardText(q.attrXp)}'}'
@@ -220,7 +220,7 @@ class _QuestSheet extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          const Icon(PhosphorIconsBold.caretRight, color: Sx.mana, size: 18),
+          Icon(PhosphorIconsBold.caretRight, color: context.sx.mana, size: 18),
           const SizedBox(width: 6),
           Expanded(
             child: GestureDetector(
@@ -334,7 +334,7 @@ Future<void> showAttributeSheet(BuildContext context, Attr attr) => _sheet(conte
       const SizedBox(height: 14),
       Row(
         children: [
-          Text('LV ${st.level}', style: Sx.disp(34, color: Sx.mana, spacing: 0)),
+          Text('LV ${st.level}', style: Sx.disp(34, color: context.sx.mana, spacing: 0)),
           const Spacer(),
           Text('${st.into} / ${st.need} XP', style: AppTheme.s(13, color: gc.textSecondary)),
         ],
@@ -351,7 +351,7 @@ Future<void> showAttributeSheet(BuildContext context, Attr attr) => _sheet(conte
       const SizedBox(height: 8),
       SizedBox(
         height: 90,
-        child: CustomPaint(painter: _LinePainter(weeks, Sx.mana, gc.border), size: Size.infinite),
+        child: CustomPaint(painter: _LinePainter(weeks, context.sx.mana, gc.border), size: Size.infinite),
       ),
       const SizedBox(height: 16),
       if (topEx.isNotEmpty) ...[
@@ -360,7 +360,7 @@ Future<void> showAttributeSheet(BuildContext context, Attr attr) => _sheet(conte
         Wrap(
           spacing: 6,
           runSpacing: 6,
-          children: [for (final e in topEx.take(8)) SystemChip('${e.key} · ${e.value}', color: Sx.violet)],
+          children: [for (final e in topEx.take(8)) SystemChip('${e.key} · ${e.value}', color: context.sx.violet)],
         ),
         const SizedBox(height: 16),
       ],
@@ -369,7 +369,7 @@ Future<void> showAttributeSheet(BuildContext context, Attr attr) => _sheet(conte
       for (final k in skills)
         Text(
           '${k.learned ? '✓' : (k.learnable ? '◆' : '·')}  ${k.def.name} — ${k.def.requirement}',
-          style: AppTheme.s(13, color: k.learned ? Sx.vital : gc.text),
+          style: AppTheme.s(13, color: k.learned ? context.sx.vital : gc.text),
         ),
       const SizedBox(height: 16),
       Text('XP HISTORY', style: Sx.disp(13, color: gc.textSecondary, spacing: 1.6)),
@@ -384,7 +384,7 @@ Future<void> showAttributeSheet(BuildContext context, Attr attr) => _sheet(conte
               Expanded(
                 child: Text(t.reason, style: AppTheme.s(13, color: gc.text)),
               ),
-              Text('+${t.attrs[attr]}  ', style: Sx.disp(14, color: Sx.mana)),
+              Text('+${t.attrs[attr]}  ', style: Sx.disp(14, color: context.sx.mana)),
               Text(dayKey(t.at), style: AppTheme.s(11.5, color: gc.textTertiary)),
             ],
           ),
@@ -467,7 +467,7 @@ class _ComebackSheetState extends State<_ComebackSheet> {
         const SizedBox(height: 14),
         SystemWindow(
           title: 'Proposed comeback plan',
-          accent: Sx.vital,
+          accent: context.sx.vital,
           child: Text(
             '• ${HunterRules.comebackPlanDays} days of lighter, shorter quests\n'
             '• Weekly target ${math.max(2, target - 1)} days instead of $target\n'
@@ -517,14 +517,14 @@ Future<void> showInboxSheet(BuildContext context) => _sheet(context, (ctx) {
           padding: const EdgeInsets.only(bottom: 10),
           child: SystemWindow(
             glow: false,
-            accent: n.read ? gc.border : Sx.mana,
+            accent: n.read ? gc.border : context.sx.mana,
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Expanded(child: SectionLabel(n.title, color: Sx.mana)),
+                    Expanded(child: SectionLabel(n.title, color: context.sx.mana)),
                     Text(dayKey(n.at), style: AppTheme.s(11, color: gc.textTertiary)),
                   ],
                 ),
@@ -576,11 +576,76 @@ Future<void> showSystemSettingsSheet(BuildContext context) => _sheet(
             'Important = level-ups, rank promotions and achievements. Everything stays in the inbox either way.',
             style: AppTheme.s(12, color: gc.textTertiary),
           ),
+          const SizedBox(height: 20),
+          Text('REMINDERS', style: Sx.disp(13, color: gc.textSecondary, spacing: 1.6)),
+          const SizedBox(height: 4),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Daily quest board'),
+            subtitle: Text(
+              "One nudge when the day's quests are ready.",
+              style: AppTheme.s(12, color: gc.textTertiary),
+            ),
+            value: hunter.reminderDailyOn,
+            onChanged: (v) => hunter.setReminder(daily: v),
+          ),
+          if (hunter.reminderDailyOn)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Reminder time'),
+              trailing: Text(
+                TimeOfDay(hour: hunter.reminderAt ~/ 60, minute: hunter.reminderAt % 60).format(ctx),
+                style: Sx.disp(16, color: gc.text),
+              ),
+              onTap: () => _pickReminderTime(ctx),
+            ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Streak at risk'),
+            subtitle: Text(
+              fit.currentStreak > 0
+                  ? 'Last call at 21:00 while your ${fit.currentStreak}-day streak is alive.'
+                  : 'Last call at 21:00, once you have a streak to protect.',
+              style: AppTheme.s(12, color: gc.textTertiary),
+            ),
+            value: hunter.reminderStreakOn,
+            onChanged: (v) => hunter.setReminder(streak: v),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Weekly missions close'),
+            subtitle: Text(
+              'Evening reminder on ${_weekEndName(fit.weekStartDay)} to finish the week.',
+              style: AppTheme.s(12, color: gc.textTertiary),
+            ),
+            value: hunter.reminderWeeklyOn,
+            onChanged: (v) => hunter.setReminder(weekly: v),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Local notifications only: nothing leaves your phone. If none arrive, allow notifications for Level Up '
+            'in Android settings.',
+            style: AppTheme.s(12, color: gc.textTertiary),
+          ),
         ],
       );
     },
   ),
 );
+
+String _weekEndName(int weekStartDay) =>
+    const ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][(weekStartDay + 5) % 7];
+
+Future<void> _pickReminderTime(BuildContext context) async {
+  final at = hunter.reminderAt;
+  final picked = await showTimePicker(
+    context: context,
+    initialTime: TimeOfDay(hour: at ~/ 60, minute: at % 60),
+    helpText: 'Daily quest reminder',
+  );
+  if (picked == null) return;
+  hunter.setReminder(minuteOfDay: picked.hour * 60 + picked.minute);
+}
 
 Future<void> showTitlesSheet(BuildContext context) => _sheet(
   context,
@@ -605,7 +670,7 @@ Future<void> showTitlesSheet(BuildContext context) => _sheet(
                 s.currentTitle?.id == t.def.id
                     ? PhosphorIconsFill.checkCircle
                     : (t.unlocked ? PhosphorIconsRegular.circle : PhosphorIconsRegular.lockSimple),
-                color: t.unlocked ? Sx.gold : gc.textTertiary,
+                color: t.unlocked ? context.sx.gold : gc.textTertiary,
               ),
               title: Text(t.def.name, style: Sx.disp(16, color: t.unlocked ? gc.text : gc.textTertiary)),
               subtitle: Text(t.def.requirement, style: AppTheme.s(12, color: gc.textTertiary)),
@@ -629,7 +694,7 @@ Future<void> showTitlesSheet(BuildContext context) => _sheet(
                         const SizedBox(height: 4),
                         Text(
                           frameOpen(f) ? f.$2 : (f.$3 == 'legendary' ? 'Legendary' : '${f.$3}-Rank'),
-                          style: AppTheme.s(11.5, color: s.frame == f.$1 ? Sx.mana : gc.textSecondary),
+                          style: AppTheme.s(11.5, color: s.frame == f.$1 ? context.sx.mana : gc.textSecondary),
                         ),
                       ],
                     ),
@@ -683,13 +748,13 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                         height: 40,
                         alignment: Alignment.center,
                         decoration: ShapeDecoration(
-                          color: i == value ? Sx.mana.withValues(alpha: 0.2) : gc.bgRaised2,
+                          color: i == value ? context.sx.mana.withValues(alpha: 0.2) : gc.bgRaised2,
                           shape: BeveledRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
-                            side: BorderSide(color: i == value ? Sx.mana : gc.border),
+                            side: BorderSide(color: i == value ? context.sx.mana : gc.border),
                           ),
                         ),
-                        child: Text('$i', style: Sx.disp(17, color: i == value ? Sx.mana : gc.text)),
+                        child: Text('$i', style: Sx.disp(17, color: i == value ? context.sx.mana : gc.text)),
                       ),
                     ),
                   ),
@@ -724,7 +789,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                 min: 0,
                 max: 12,
                 divisions: 24,
-                activeColor: Sx.mana,
+                activeColor: context.sx.mana,
                 onChanged: (v) => setState(() => _sleep = v),
               ),
             ),
@@ -743,7 +808,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
             Expanded(
               child: Text('Any pain (not normal muscle soreness)?', style: AppTheme.s(14, color: gc.text)),
             ),
-            Switch(value: _pain, activeThumbColor: Sx.alert, onChanged: (v) => setState(() => _pain = v)),
+            Switch(value: _pain, activeThumbColor: context.sx.alert, onChanged: (v) => setState(() => _pain = v)),
           ],
         ),
         const SizedBox(height: 14),
@@ -780,7 +845,7 @@ class _SleepSheetState extends State<_SleepSheet> {
         Center(
           child: Text(
             '${_h.toStringAsFixed(1)} h',
-            style: Sx.disp(48, color: _h >= HunterRules.sleepTargetHours ? Sx.vital : gc.text),
+            style: Sx.disp(48, color: _h >= HunterRules.sleepTargetHours ? context.sx.vital : gc.text),
           ),
         ),
         Slider(
@@ -788,7 +853,7 @@ class _SleepSheetState extends State<_SleepSheet> {
           min: 0,
           max: 12,
           divisions: 24,
-          activeColor: Sx.mana,
+          activeColor: context.sx.mana,
           onChanged: (v) => setState(() => _h = v),
         ),
         const SizedBox(height: 10),
@@ -838,7 +903,7 @@ class _InjurySheetState extends State<_InjurySheet> {
               ChoiceChip(
                 label: Text(muscleLabel(m.id)),
                 selected: _area == m.id,
-                selectedColor: Sx.alert.withValues(alpha: 0.25),
+                selectedColor: context.sx.alert.withValues(alpha: 0.25),
                 onSelected: (_) => setState(() => _area = m.id),
               ),
           ],
@@ -850,7 +915,7 @@ class _InjurySheetState extends State<_InjurySheet> {
           min: 1,
           max: 10,
           divisions: 9,
-          activeColor: _sev >= 7 ? Sx.alert : (_sev >= 4 ? Sx.gold : Sx.vital),
+          activeColor: _sev >= 7 ? context.sx.alert : (_sev >= 4 ? context.sx.gold : context.sx.vital),
           onChanged: (v) => setState(() => _sev = v),
         ),
         TextField(
@@ -892,7 +957,7 @@ Future<void> showRedFlagsSheet(BuildContext context) => _sheet(context, (ctx) {
           padding: const EdgeInsets.only(bottom: 8),
           child: Row(
             children: [
-              const Icon(PhosphorIconsRegular.warning, color: Sx.alert, size: 20),
+              Icon(PhosphorIconsRegular.warning, color: context.sx.alert, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(f, style: AppTheme.s(14.5, color: gc.text)),

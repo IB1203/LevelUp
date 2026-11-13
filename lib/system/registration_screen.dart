@@ -117,8 +117,9 @@ class _HunterRegistrationScreenState extends State<HunterRegistrationScreen> {
                 child: Row(
                   children: [
                     IconButton(
+                      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                       onPressed: _back,
-                      icon: Icon(Icons.arrow_back, color: gc.textSecondary),
+                      icon: Icon(PhosphorIconsBold.caretLeft, size: 20, color: gc.textSecondary),
                     ),
                     Expanded(child: SystemBar(value: _step / 5, height: 4)),
                     const SizedBox(width: 12),
@@ -158,7 +159,7 @@ class _HunterRegistrationScreenState extends State<HunterRegistrationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionLabel(kicker, color: Sx.mana),
+        SectionLabel(kicker, color: context.sx.mana),
         const SizedBox(height: 6),
         Text(
           title,
@@ -175,7 +176,7 @@ class _HunterRegistrationScreenState extends State<HunterRegistrationScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: SystemWindow(
-        accent: selected ? Sx.mana : gc.border,
+        accent: selected ? context.sx.mana : gc.border,
         glow: selected,
         onTap: () {
           HapticFeedback.selectionClick();
@@ -198,7 +199,7 @@ class _HunterRegistrationScreenState extends State<HunterRegistrationScreen> {
             ),
             Icon(
               selected ? PhosphorIconsFill.checkCircle : PhosphorIconsRegular.circle,
-              color: selected ? Sx.mana : gc.textTertiary,
+              color: selected ? context.sx.mana : gc.textTertiary,
             ),
           ],
         ),
@@ -219,10 +220,10 @@ class _HunterRegistrationScreenState extends State<HunterRegistrationScreen> {
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
                 _bootLines[i],
-                style: Sx.disp(i == 0 ? 18 : 17, color: i == 0 ? Sx.mana : gc.text, spacing: i == 0 ? 2 : 0.6),
+                style: Sx.disp(i == 0 ? 18 : 17, color: i == 0 ? context.sx.mana : gc.text, spacing: i == 0 ? 2 : 0.6),
               ),
             ),
-          if (_shown < _bootLines.length) Text('▌', style: Sx.disp(17, color: Sx.mana)),
+          if (_shown < _bootLines.length) Text('▌', style: Sx.disp(17, color: context.sx.mana)),
         ],
       ),
     ),
@@ -335,7 +336,7 @@ class _HunterRegistrationScreenState extends State<HunterRegistrationScreen> {
           FilterChip(
             label: Text(l),
             selected: _limits.contains(l),
-            selectedColor: Sx.gold.withValues(alpha: 0.25),
+            selectedColor: context.sx.gold.withValues(alpha: 0.25),
             onSelected: (on) => setState(() => on ? _limits.add(l) : _limits.remove(l)),
           ),
       ],
@@ -369,7 +370,7 @@ class _HunterRegistrationScreenState extends State<HunterRegistrationScreen> {
       ),
     if (_screen.any((a) => a))
       SystemWindow(
-        accent: Sx.gold,
+        accent: context.sx.gold,
         title: 'Clinician first',
         child: Text(
           'Please talk to a doctor or qualified clinician before starting or increasing training. '
@@ -391,13 +392,13 @@ class _HunterRegistrationScreenState extends State<HunterRegistrationScreen> {
           SizedBox(
             height: 180,
             width: double.infinity,
-            child: ParticleBurst(color: Sx.mana, enabled: hunter.animationsOn),
+            child: ParticleBurst(color: context.sx.mana, enabled: hunter.animationsOn),
           ),
           const RankEmblem(letter: 'E', size: 120),
         ],
       ),
       const SizedBox(height: 12),
-      Center(child: SectionLabel('Player awakened', color: Sx.mana)),
+      Center(child: SectionLabel('Player awakened', color: context.sx.mana)),
       const SizedBox(height: 6),
       Text(
         _name.text.trim().isEmpty ? 'Hunter' : _name.text.trim(),
@@ -422,7 +423,7 @@ class _HunterRegistrationScreenState extends State<HunterRegistrationScreen> {
                     Expanded(
                       child: Text(a.label.toUpperCase(), style: Sx.disp(15, color: gc.text)),
                     ),
-                    Text('LV 01', style: Sx.disp(15, color: Sx.mana)),
+                    Text('LV 01', style: Sx.disp(15, color: context.sx.mana)),
                   ],
                 ),
               ),

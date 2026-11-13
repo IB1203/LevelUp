@@ -6,6 +6,7 @@ import 'package:level_up/models/workout.dart';
 import 'package:level_up/screens/timeline_screen.dart';
 import 'package:level_up/services/local_store.dart';
 import 'package:level_up/services/progress_reminder.dart';
+import 'package:level_up/services/system_reminder.dart';
 import 'package:level_up/state/fit_state.dart';
 import 'package:level_up/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,6 +32,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await Store.instance.init();
     ProgressReminder.instance.enabled = false;
+    SystemReminder.instance.enabled = false;
     setAppLanguage('es');
     fit.sessions.clear();
     fit.setPhotoInterval(30);

@@ -223,6 +223,48 @@ abstract class AppLocalizations {
   /// **'TODAY\'S ROUTINE'**
   String get todaysRoutine;
 
+  /// No description provided for @hunterSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'HUNTER SYSTEM'**
+  String get hunterSystem;
+
+  /// No description provided for @registerToBegin.
+  ///
+  /// In en, this message translates to:
+  /// **'Register to begin your journey'**
+  String get registerToBegin;
+
+  /// No description provided for @rankLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'RANK'**
+  String get rankLabel;
+
+  /// No description provided for @levelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'LVL'**
+  String get levelLabel;
+
+  /// No description provided for @xpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'XP'**
+  String get xpLabel;
+
+  /// No description provided for @xpProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{into} / {need}'**
+  String xpProgress(Object into, Object need);
+
+  /// No description provided for @attributes.
+  ///
+  /// In en, this message translates to:
+  /// **'ATTRIBUTES'**
+  String get attributes;
+
   /// No description provided for @startWorkout.
   ///
   /// In en, this message translates to:

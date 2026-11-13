@@ -194,6 +194,16 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               ),
               Positioned(
                 left: 20,
+                top: pad + 12,
+                child: RoundAction(
+                  size: _btn,
+                  label: MaterialLocalizations.of(context).backButtonTooltip,
+                  onTap: () => fit.popRoute(fallback: 'training'),
+                  child: Icon(PhosphorIconsRegular.caretLeft, size: 17, color: gc.text),
+                ),
+              ),
+              Positioned(
+                left: 20 + _btn + 12,
                 right: 20 + _btn + 12 + (_btn + 8) * 2 * p,
                 top: pad + 12 + 6 * p,
                 child: IgnorePointer(

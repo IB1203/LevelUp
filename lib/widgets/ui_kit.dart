@@ -259,12 +259,22 @@ class TinySwitch extends StatelessWidget {
 }
 
 class Pressable extends StatefulWidget {
-  const Pressable({super.key, required this.child, required this.onTap, this.scale = 0.965, this.onLongPress});
+  const Pressable({
+    super.key,
+    required this.child,
+    required this.onTap,
+    this.scale = 0.965,
+    this.onLongPress,
+    this.semanticsLabel,
+  });
 
   final Widget child;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final double scale;
+
+  /// When set, screen readers announce this instead of the children.
+  final String? semanticsLabel;
 
   @override
   State<Pressable> createState() => _PressableState();
@@ -279,7 +289,7 @@ class _PressableState extends State<Pressable> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final gesture = GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
@@ -293,6 +303,8 @@ class _PressableState extends State<Pressable> {
         child: widget.child,
       ),
     );
+    if (widget.onTap == null && widget.onLongPress == null) return gesture;
+    return gesture;
   }
 }
 
@@ -601,7 +613,7 @@ class BetaTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tone = context.gc.bg.computeLuminance() < 0.5 ? const Color(0xFFD08CF2) : const Color(0xFF9333C4);
+    final tone = context.gc.info;
     return Container(
       padding: EdgeInsetsDirectional.fromSTEB(small ? 5 : 6, small ? 2 : 3, small ? 6 : 7, small ? 2 : 3),
       decoration: BoxDecoration(
@@ -787,17 +799,6 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
       );
     });
   }
-}
-
-class Kicker extends StatelessWidget {
-  const Kicker(this.text, {super.key, required this.color, this.size = 12, this.spacing = 3});
-  final String text;
-  final Color color;
-  final double size;
-  final double spacing;
-  @override
-  Widget build(BuildContext context) =>
-      Text(text, style: AppTheme.f(size, weight: FontWeight.w600, color: color, letterSpacing: spacing));
 }
 
 class StepperControl extends StatelessWidget {

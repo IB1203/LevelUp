@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../l10n/l10n.dart';
 import '../widgets/entrance.dart';
+import '../widgets/today_workout_card.dart';
 import '../widgets/ui_kit.dart';
 import 'hunter_catalog.dart';
 import 'hunter_engine.dart';
@@ -77,7 +78,7 @@ class HunterHome extends StatelessWidget {
                   top: 6,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                    decoration: BoxDecoration(color: Sx.alert, borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(color: context.sx.alert, borderRadius: BorderRadius.circular(10)),
                     child: Text(
                       '${s.unreadNotes > 99 ? '99+' : s.unreadNotes}',
                       style: AppTheme.f(10.5, weight: FontWeight.w800, color: Colors.white),
@@ -116,8 +117,12 @@ class HunterHome extends StatelessWidget {
           ],
         ),
       ),
-      const SizedBox(height: 14),
-      _trainingHub(context),
+      if (TodayWorkoutCard.visible) ...[
+        const SizedBox(height: 14),
+        const SectionLabel("Today's mission"),
+        const SizedBox(height: 8),
+        const TodayWorkoutCard(),
+      ],
     ];
   }
 
@@ -125,11 +130,12 @@ class HunterHome extends StatelessWidget {
     final gc = context.gc;
     final board = s.todayQuests;
     final done = board.where((q) => q.done).length;
+    final path = hunterClassById(hunter.player?.classId);
     return [
       if (s.comebackDue) ...[
         SystemWindow(
           title: 'System message',
-          accent: Sx.vital,
+          accent: context.sx.vital,
           onTap: () => showComebackSheet(context),
           child: Text(
             'Welcome back, Hunter. ${s.daysAway} days away. Your journey has not ended: tap for a comeback plan.',
@@ -141,7 +147,7 @@ class HunterHome extends StatelessWidget {
       if (s.weeklyProposal case final p?) ...[
         SystemWindow(
           title: 'Weekly target review',
-          accent: Sx.gold,
+          accent: context.sx.gold,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -166,7 +172,7 @@ class HunterHome extends StatelessWidget {
       if (s.promotionReady) ...[
         SystemWindow(
           title: 'Rank promotion available',
-          accent: Sx.gold,
+          accent: context.sx.gold,
           onTap: () => SystemScreen.open(3),
           child: Text(
             'You have fulfilled your promotion requirements for ${s.nextRank!.letter}-Rank. Tap to begin.',
@@ -176,13 +182,24 @@ class HunterHome extends StatelessWidget {
         const SizedBox(height: 12),
       ],
       _statusWindow(context, s),
-      const SizedBox(height: 14),
+      if (TodayWorkoutCard.visible) ...[
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            const Expanded(child: SectionLabel("Today's mission")),
+            Text('${path.name} path', style: AppTheme.s(12.5, color: gc.textSecondary)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const TodayWorkoutCard(),
+      ],
+      const SizedBox(height: 18),
       Row(
         children: [
           const Expanded(child: SectionLabel('Daily quests')),
           Text(
             '$done/${board.length} complete',
-            style: AppTheme.s(12.5, color: done == board.length ? Sx.vital : gc.textSecondary),
+            style: AppTheme.s(12.5, color: done == board.length ? context.sx.vital : gc.textSecondary),
           ),
         ],
       ),
@@ -192,27 +209,61 @@ class HunterHome extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
             'Readiness is low today: the System lowered quest difficulty.',
-            style: AppTheme.s(12.5, color: Sx.gold),
+            style: AppTheme.s(12.5, color: context.sx.gold),
           ),
         )
       else if (!s.readiness.logged)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: GestureDetector(
-            onTap: () => showCheckInSheet(context),
-            child: Text(
-              'Do a 10-second check-in so quests match how you feel today ›',
-              style: AppTheme.s(12.5, color: Sx.mana),
+          child: Semantics(
+            container: true,
+            button: true,
+            label: 'Do a 10-second check-in so quests match how you feel today',
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => showCheckInSheet(context),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Do a 10-second check-in so quests match how you feel today ›',
+                    style: AppTheme.s(12.5, color: context.sx.mana),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
+      if (board.isEmpty)
+        SystemWindow(
+          child: Text(
+            'No quests on the board right now. They refresh at the start of each day.',
+            style: AppTheme.s(13.5, color: gc.textSecondary),
+          ),
+        ),
       for (final q in board) ...[QuestCard(q), const SizedBox(height: 8)],
-      const SizedBox(height: 6),
-      for (final m in s.weekly) ...[WeeklyCard(m), const SizedBox(height: 8)],
-      const SizedBox(height: 6),
-      _grid(context, s),
-      const SizedBox(height: 14),
-      _trainingHub(context),
+      if (s.weekly.isNotEmpty) ...[
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            const Expanded(child: SectionLabel('Weekly quests')),
+            Semantics(
+              button: true,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => SystemScreen.open(1),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text('All quests ›', style: AppTheme.s(12.5, color: context.sx.mana)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        for (final m in s.weekly) ...[WeeklyCard(m), const SizedBox(height: 8)],
+      ],
     ];
   }
 
@@ -221,7 +272,7 @@ class HunterHome extends StatelessWidget {
     return SystemWindow(
       title: 'Status',
       onTap: () => SystemScreen.open(0),
-      trailing: Text('OPEN ›', style: Sx.disp(12, color: Sx.mana, spacing: 1.4)),
+      trailing: Text('OPEN ›', style: Sx.disp(12, color: context.sx.mana, spacing: 1.4)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -241,7 +292,7 @@ class HunterHome extends StatelessWidget {
                     ),
                     Text(
                       [if (s.currentTitle != null) '«${s.currentTitle!.name}»', '${s.rank.letter}-Rank'].join(' · '),
-                      style: AppTheme.s(12.5, color: s.currentTitle != null ? Sx.gold : gc.textSecondary),
+                      style: AppTheme.s(12.5, color: s.currentTitle != null ? context.sx.gold : gc.textSecondary),
                     ),
                     const SizedBox(height: 8),
                     SystemBar(value: s.levelRatio, height: 6),
@@ -257,7 +308,7 @@ class HunterHome extends StatelessWidget {
               Column(
                 children: [
                   Text('LV', style: Sx.disp(11, color: gc.textSecondary)),
-                  Text('${s.level}', style: Sx.disp(34, color: Sx.mana, spacing: 0)),
+                  Text('${s.level}', style: Sx.disp(34, color: context.sx.mana, spacing: 0)),
                 ],
               ),
             ],
@@ -267,17 +318,28 @@ class HunterHome extends StatelessWidget {
             children: [
               for (final a in Attr.values)
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () => showAttributeSheet(context, a),
-                    child: Column(
-                      children: [
-                        Text(a.short, style: Sx.disp(12, color: gc.textSecondary, spacing: 1.2)),
-                        Text('${s.attrs[a]!.level}', style: Sx.disp(20, color: Sx.violet, spacing: 0)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          child: SystemBar(value: s.attrs[a]!.ratio, height: 3, color: Sx.violet),
+                  child: Semantics(
+                    container: true,
+                    button: true,
+                    label: '${a.label} attribute, level ${s.attrs[a]!.level}',
+                    hint: 'Opens the progress breakdown',
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => showAttributeSheet(context, a),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 48),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(a.short, style: Sx.disp(12, color: gc.textSecondary, spacing: 1.2)),
+                            Text('${s.attrs[a]!.level}', style: Sx.disp(20, color: context.sx.violet, spacing: 0)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: SystemBar(value: s.attrs[a]!.ratio, height: 3, color: context.sx.violet),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -289,7 +351,7 @@ class HunterHome extends StatelessWidget {
               Expanded(child: _mini(context, 'Workouts', '${s.workouts}')),
               Expanded(child: _mini(context, 'Quests', '${s.questsDone}')),
               Expanded(child: _mini(context, 'Streak', '${s.streak}d')),
-              Expanded(child: _mini(context, 'SP', '${s.skillPoints}', color: s.skillPoints > 0 ? Sx.gold : null)),
+              Expanded(child: _mini(context, 'SP', '${s.skillPoints}', color: s.skillPoints > 0 ? context.sx.gold : null)),
             ],
           ),
         ],
@@ -303,74 +365,4 @@ class HunterHome extends StatelessWidget {
       Text(k.toUpperCase(), style: Sx.disp(10.5, color: context.gc.textTertiary, spacing: 1.2)),
     ],
   );
-
-  Widget _grid(BuildContext context, HunterStatus s) {
-    final gc = context.gc;
-    final items = [
-      (PhosphorIconsRegular.user, 'Status', 0),
-      (PhosphorIconsRegular.flag, 'Quests', 1),
-      (PhosphorIconsRegular.shieldChevron, 'Bosses', 2),
-      (PhosphorIconsRegular.medal, 'Rank', 3),
-      (PhosphorIconsRegular.treeStructure, 'Skills', 4),
-      (PhosphorIconsRegular.trophy, 'Awards', 5),
-      (PhosphorIconsRegular.chartBar, 'Records', 6),
-      (PhosphorIconsRegular.clockCounterClockwise, 'Timeline', 7),
-      (PhosphorIconsRegular.heartbeat, 'Vitals', 8),
-    ];
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      childAspectRatio: 1.3,
-      children: [
-        for (final (icon, label, tab) in items)
-          SystemWindow(
-            glow: false,
-            padding: const EdgeInsets.all(6),
-            onTap: () => SystemScreen.open(tab),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Sx.mana, size: 22),
-                const SizedBox(height: 4),
-                Text(label.toUpperCase(), style: Sx.disp(12.5, color: gc.text, spacing: 1.2)),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _trainingHub(BuildContext context) {
-    final gc = context.gc;
-    return SystemWindow(
-      title: 'Training hub',
-      accent: Sx.violet,
-      onTap: () => fit.pushRoute('training'),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Routines, weekly plan, body map, 466 exercises, nutrition and body stats. '
-              'Every workout you log here feeds the System.',
-              style: AppTheme.s(13.5, color: gc.textSecondary),
-            ),
-          ),
-          const Icon(PhosphorIconsBold.caretRight, color: Sx.violet),
-        ],
-      ),
-    );
-  }
 }
-
-/// Kept for screens that expect a category colour without importing the board.
-Color categoryColor(QuestCategory c) => switch (c) {
-  QuestCategory.bonus => Sx.violet,
-  QuestCategory.recovery || QuestCategory.mobility => Sx.vital,
-  QuestCategory.discipline => Sx.gold,
-  _ => Sx.mana,
-};
-
-String rankTitle(String letter) => rankByLetter(letter).title;

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../catalog/exercise_catalog.dart';
 import '../models/exercise.dart';
 import '../models/workout.dart';
+import '../services/system_reminder.dart';
 import '../state/fit_state.dart';
 import 'hunter_catalog.dart';
 import 'hunter_models.dart';
@@ -26,6 +27,11 @@ String dayKey(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
+
+/// [d] moved by [n] calendar days. Adding `Duration(days: n)` to a local date
+/// drifts by an hour across a daylight-saving change and lands on the wrong day.
+DateTime _addDays(DateTime d, int n) =>
+    DateTime(d.year, d.month, d.day + n, d.hour, d.minute, d.second, d.millisecond, d.microsecond);
 
 DateTime? _parseDay(Object? raw) {
   if (raw is! String) return null;
@@ -143,7 +149,7 @@ class GateRun {
   final DateTime? start;
   final num progress;
   final GateStatus status;
-  DateTime? get end => start?.add(Duration(days: def.days));
+  DateTime? get end => start == null ? null : _addDays(start!, def.days);
   int get daysLeft => end == null ? def.days : math.max(0, end!.difference(_day(DateTime.now())).inDays);
 }
 
@@ -393,6 +399,7 @@ class HunterSystem extends ChangeNotifier {
   void _changed() {
     _rev++;
     _cache = null;
+    syncSystemReminders();
     if (_saveQueued) return;
     _saveQueued = true;
     scheduleMicrotask(() {
@@ -490,6 +497,42 @@ class HunterSystem extends ChangeNotifier {
   /// 'all', 'important' or 'off'.
   String get alertLevel => settings['freq'] as String? ?? 'all';
 
+  // --- Reminders -------------------------------------------------------------
+
+  bool get reminderDailyOn => settings['remind'] != false;
+  bool get reminderStreakOn => settings['remindStreak'] != false;
+  bool get reminderWeeklyOn => settings['remindWeekly'] != false;
+
+  /// Minute of day for the daily quest nudge, 19:00 by default.
+  int get reminderAt => ((settings['remindAt'] as num?)?.toInt() ?? 19 * 60).clamp(0, 24 * 60 - 1);
+
+  /// Local notifications only; safe to call as often as state changes.
+  void syncSystemReminders() {
+    if (!registered) {
+      SystemReminder.instance.cancel();
+      return;
+    }
+    SystemReminder.instance.schedule(
+      daily: reminderDailyOn,
+      minuteOfDay: reminderAt,
+      streak: reminderStreakOn && fit.currentStreak > 0,
+      weekly: reminderWeeklyOn,
+      weekEndWeekday: ((fit.weekStartDay + 5) % 7) + 1,
+    );
+  }
+
+  void setReminder({bool? daily, int? minuteOfDay, bool? streak, bool? weekly}) {
+    final at = minuteOfDay?.clamp(0, 24 * 60 - 1);
+    _data['settings'] = {
+      ...settings,
+      'remind': ?daily,
+      'remindAt': ?at,
+      'remindStreak': ?streak,
+      'remindWeekly': ?weekly,
+    };
+    _changed();
+  }
+
   void setSetting(String key, Object value) {
     _data['settings'] = {...settings, key: value};
     _changed();
@@ -521,7 +564,18 @@ class HunterSystem extends ChangeNotifier {
     m[dayKey(DateTime.now())] = {'en': energy, 'so': soreness, 'st': stress, if (pain) 'pain': true};
     _data['check'] = m;
     if (sleep != null) logSleep(sleep);
+    _refreshBoard();
     _changed();
+  }
+
+  /// Drops today's quests nobody has touched so the next sync rebuilds them for
+  /// the hunter's current state (readiness, pain, injuries, comeback plan).
+  void _refreshBoard() {
+    final tk = dayKey(DateTime.now());
+    final qs = Map<String, dynamic>.from((_data['quests'] as Map?) ?? const {});
+    qs.removeWhere((k, v) => v is Map && v['day'] == tk && v['st'] == QuestStatus.offered.name);
+    _data['quests'] = qs;
+    _data['boardStale'] = tk;
   }
 
   List<Injury> get injuries => [for (final r in (_data['injuries'] as List?) ?? const []) ?Injury.fromJson(r)];
@@ -531,6 +585,7 @@ class HunterSystem extends ChangeNotifier {
       ...[for (final i in injuries) i.toJson()],
       Injury('${DateTime.now().millisecondsSinceEpoch}', area, severity, note, DateTime.now(), false).toJson(),
     ];
+    _refreshBoard();
     _changed();
   }
 
@@ -588,7 +643,7 @@ class HunterSystem extends ChangeNotifier {
   void rescheduleQuest(String id) {
     final q = _quests[id];
     if (q == null || q.done || q.rescheduled) return;
-    final tomorrow = _day(DateTime.now()).add(const Duration(days: 1));
+    final tomorrow = _addDays(_day(DateTime.now()), 1);
     q
       ..day = dayKey(tomorrow)
       ..rescheduled = true
@@ -875,7 +930,7 @@ class HunterSystem extends ChangeNotifier {
       ..._comebacks,
       {
         'start': dayKey(today),
-        'until': dayKey(today.add(const Duration(days: HunterRules.comebackPlanDays))),
+        'until': dayKey(_addDays(today, HunterRules.comebackPlanDays)),
         'reason': reason,
         'target': reduced,
         'prevTarget': p?.weeklyTarget ?? 3,
@@ -886,9 +941,7 @@ class HunterSystem extends ChangeNotifier {
       _data['player'] = p.toJson();
     }
     // Today's untouched quests are rebuilt with the lighter plan.
-    final qs = Map<String, dynamic>.from((_data['quests'] as Map?) ?? const {});
-    qs.removeWhere((k, v) => v is Map && v['day'] == dayKey(today) && v['st'] == QuestStatus.offered.name);
-    _data['quests'] = qs;
+    _refreshBoard();
     _note('system', 'WELCOME BACK, HUNTER', 'Comeback plan active for ${HunterRules.comebackPlanDays} days.');
     _changed();
   }
@@ -1113,7 +1166,7 @@ class HunterSystem extends ChangeNotifier {
 
   QuestGenerator _generator(DateTime day) {
     final today = _day(day);
-    final yesterday = today.subtract(const Duration(days: 1));
+    final yesterday = _addDays(today, -(1));
     final recent = {
       for (final s in fit.sessions)
         if (!_day(s.day).isBefore(yesterday))
@@ -1199,6 +1252,13 @@ class HunterSystem extends ChangeNotifier {
       }
     }
 
+    // Days holding a paid record whose workout no longer exists under that timestamp.
+    final liveStamps = {for (final s in fit.sessions) 'pr:${s.date.millisecondsSinceEpoch}'};
+    final repaidPrDays = {
+      for (final t in ledgerNow.values)
+        if (t.id.startsWith('pr:') && !liveStamps.contains(t.id)) dayKey(t.at),
+    };
+
     for (final f in facts) {
       final s = f.session;
       // 1. The workout itself.
@@ -1231,8 +1291,10 @@ class HunterSystem extends ChangeNotifier {
           ),
         );
       }
-      // 2. Personal records.
-      if (f.prs > 0) {
+      // 2. Personal records. A workout whose time was edited, or that was deleted
+      // and logged again, comes back under a new timestamp: its records were
+      // already paid that day, so they are not paid a second time.
+      if (f.prs > 0 && !repaidPrDays.contains(dayKey(s.date))) {
         final n = math.min(f.prs, HunterRules.maxPrsPerSession);
         if (_grant(
           XpTransaction(
@@ -1355,14 +1417,39 @@ class HunterSystem extends ChangeNotifier {
       }
     }
 
+    // A finished comeback plan hands the weekly target back, unless the hunter
+    // has changed it since.
+    final plans = _comebacks;
+    var restored = false;
+    for (final c in plans) {
+      final until = _parseDay(c['until']);
+      final prev = c['prevTarget'];
+      if (until == null || until.isAfter(today) || prev is! num || c['restored'] == true) continue;
+      c['restored'] = true;
+      restored = true;
+      final p = player;
+      if (p != null && p.weeklyTarget == c['target'] && prev.toInt() > p.weeklyTarget) {
+        p.weeklyTarget = prev.toInt();
+        _data['player'] = p.toJson();
+        _note('system', 'COMEBACK COMPLETE', 'Your weekly target is back to ${prev.toInt()} training days.',
+            id: 'comeback-done:${c['start']}');
+      }
+    }
+    if (restored) _data['comebacks'] = plans;
+
     // 5. Today's quest board, then data-validated quests and expiry.
     final tk = dayKey(today);
     final prefix = 'q${tk.replaceAll('-', '')}-';
-    if (!_quests.keys.any((id) => id.startsWith(prefix))) {
+    final fresh = !_quests.keys.any((id) => id.startsWith(prefix));
+    if (fresh || _data['boardStale'] == tk) {
+      // Quest ids are one per category and day, so quests the hunter already
+      // accepted, started or finished are kept and only the gaps are filled.
+      final have = _quests.keys.toSet();
       for (final q in _generator(today).daily()) {
-        _putQuest(q);
+        if (!have.contains(q.id)) _putQuest(q);
       }
-      _note('quest', 'SYSTEM ALERT', 'New daily quests generated.', id: 'quests:$tk');
+      _data.remove('boardStale');
+      if (fresh) _note('quest', 'SYSTEM ALERT', 'New daily quests generated.', id: 'quests:$tk');
     }
     for (final q in _quests.values) {
       final qd = _parseDay(q.day) ?? today;
@@ -1384,9 +1471,19 @@ class HunterSystem extends ChangeNotifier {
       }
     }
 
-    // 6. Weekly missions for every week since registration.
-    for (var ws = _weekStart(since); !ws.isAfter(today); ws = ws.add(const Duration(days: 7))) {
-      final end = ws.add(const Duration(days: 7));
+    // 6. Weekly missions. Only this week and the one before are settled: older
+    // weeks were judged when they ended, and re-judging them with today's target,
+    // path or "week starts on" setting would pay them a second time.
+    final paidWeeks = <DateTime>{
+      for (final k in ((_data['ledger'] as Map?) ?? const {}).keys)
+        if ('$k'.startsWith('weekly:')) ?_parseDay('$k'.split(':')[1]),
+    };
+    var firstWeek = _addDays(_weekStart(today), -7);
+    if (firstWeek.isBefore(_weekStart(since))) firstWeek = _weekStart(since);
+    for (var ws = firstWeek; !ws.isAfter(today); ws = _addDays(ws, 7)) {
+      final end = _addDays(ws, 7);
+      // The week start setting changed: this window overlaps one already paid.
+      if (paidWeeks.any((w) => w != ws && w.difference(ws).inHours.abs() < 7 * 24 - 2)) continue;
       for (final m in _weeklyFor(ws, facts)) {
         if (m.done &&
             _grant(
@@ -1449,7 +1546,7 @@ class HunterSystem extends ChangeNotifier {
     // 9. Level-ups, skills ready, promotion available, recovery advice.
     final levelAfter = HunterRules.levelFor(_totalXp).level;
     if (levelAfter > levelBefore) {
-      _note('level', 'LEVEL UP!', '$levelBefore → $levelAfter', id: 'level:$levelAfter');
+      _note('level', 'LEVEL UP!', '$levelBefore to $levelAfter', id: 'level:$levelAfter');
     }
     final sstats = _skillStats(facts);
     final totals = _attrXpTotals();
@@ -1477,7 +1574,7 @@ class HunterSystem extends ChangeNotifier {
     final ws = _weekStart(today);
     final prop = _data['proposal'];
     if (!(prop is Map && prop['week'] == dayKey(ws)) && ws.difference(since).inDays >= 14) {
-      final last = [for (var i = 1; i <= 2; i++) _activeDays(ws.subtract(Duration(days: 7 * i)), facts)];
+      final last = [for (var i = 1; i <= 2; i++) _activeDays(_addDays(ws, -(7 * i)), facts)];
       final target = p.weeklyTarget;
       int? to;
       if (last.every((n) => n >= target + 1) && target < 6) to = target + 1;
@@ -1492,7 +1589,9 @@ class HunterSystem extends ChangeNotifier {
     if (q.done) return;
     q.completion = ratio;
     if (ratio < HunterRules.questMinCompletion) {
-      q.status = QuestStatus.partial;
+      // Too little to count: nothing is granted, and the quest stays open so it
+      // can be picked up again later today.
+      q.status = QuestStatus.accepted;
       _putQuest(q);
       return;
     }
@@ -1548,7 +1647,7 @@ class HunterSystem extends ChangeNotifier {
             s.exercises
                 .where(
                   (e) =>
-                      e.name.toLowerCase().contains('push') &&
+                      RegExp(r'push[- ]?ups?').hasMatch(e.name.toLowerCase()) &&
                       const {'chest', 'triceps', 'shoulders'}.contains(e.primary),
                 )
                 .fold<int>(0, (m, e) => m + e.workingSets.fold<int>(0, (r, x) => r + x.reps)),
@@ -1574,28 +1673,65 @@ class HunterSystem extends ChangeNotifier {
 
   int _activeDays(DateTime ws, List<SessionFacts> facts) => {
     for (final f in facts)
-      if (!f.day.isBefore(ws) && f.day.isBefore(ws.add(const Duration(days: 7)))) dayKey(f.day),
+      if (!f.day.isBefore(ws) && f.day.isBefore(_addDays(ws, 7))) dayKey(f.day),
   }.length;
 
   List<WeeklyMission> _weeklyFor(DateTime ws, List<SessionFacts> facts) {
-    final we = ws.add(const Duration(days: 7));
+    final we = _addDays(ws, 7);
     final inWeek = [
       for (final f in facts)
         if (!f.day.isBefore(ws) && f.day.isBefore(we)) f,
     ];
+    final path = hunterClassById(player?.classId);
     final t = player?.weeklyTarget ?? 3;
     final strength = math.max(1, (t / 2).ceil());
     final mobility = t >= 4 ? 2 : 1;
     final cardio = t >= 5 ? 2 : 1;
     final planned = math.max(1, t - 1);
+
+    // The path decides which session the week is judged on. Ids stay stable so
+    // past weeks are not re-awarded when a player changes path.
+    final (String name, Requirement focus, Requirement support) = switch (path.id) {
+      'hypertrophy' => (
+        'Volume Week',
+        Requirement('Strength workouts', inWeek.where((f) => f.strength).length, strength + 1),
+        Requirement('Cardio sessions', inWeek.where((f) => f.cardio).length, cardio),
+      ),
+      'strength' => (
+        'Heavy Week',
+        Requirement('Strength workouts', inWeek.where((f) => f.strength).length, strength),
+        Requirement('Cardio sessions', inWeek.where((f) => f.cardio).length, cardio),
+      ),
+      'endurance' => (
+        'Ranger Week',
+        Requirement('Cardio sessions', inWeek.where((f) => f.cardio).length, cardio + 1),
+        Requirement('Strength workouts', inWeek.where((f) => f.strength).length, 1),
+      ),
+      'fatloss' => (
+        'Shadow Week',
+        Requirement('Cardio sessions', inWeek.where((f) => f.cardio).length, cardio),
+        Requirement('Strength workouts', inWeek.where((f) => f.strength).length, 1),
+      ),
+      'mobility' => (
+        'Monk Week',
+        Requirement('Mobility sessions', inWeek.where((f) => f.mobilitySets > 0).length, math.max(2, mobility + 1)),
+        Requirement('Strength workouts', inWeek.where((f) => f.strength).length, 1),
+      ),
+      _ => (
+        'Balanced Hunter',
+        Requirement('Strength workouts', inWeek.where((f) => f.strength).length, strength),
+        Requirement('Cardio sessions', inWeek.where((f) => f.cardio).length, cardio),
+      ),
+    };
+
     return [
       WeeklyMission(
         'mission_a',
-        'Balanced Hunter',
+        name,
         [
-          Requirement('Strength workouts', inWeek.where((f) => f.strength).length, strength),
+          focus,
+          support,
           Requirement('Mobility sessions', inWeek.where((f) => f.mobilitySets > 0).length, mobility),
-          Requirement('Cardio sessions', inWeek.where((f) => f.cardio).length, cardio),
           Requirement('Active days (weekly target)', _activeDays(ws, facts), t),
         ],
         250,
@@ -1620,7 +1756,7 @@ class HunterSystem extends ChangeNotifier {
   }
 
   num _gateProgress(GateDef g, DateTime start, List<SessionFacts> facts) {
-    final end = start.add(Duration(days: g.days));
+    final end = _addDays(start, g.days);
     final inGate = [
       for (final f in facts)
         if (!f.day.isBefore(start) && f.day.isBefore(end)) f,
@@ -1844,7 +1980,7 @@ class HunterSystem extends ChangeNotifier {
       final start = _parseDay(mine.isEmpty ? null : mine.last['start']);
       if (start != null) {
         final prog = _gateProgress(g, start, facts);
-        final end = start.add(Duration(days: g.days));
+        final end = _addDays(start, g.days);
         gates.add(
           GateRun(
             g,
@@ -1875,7 +2011,7 @@ class HunterSystem extends ChangeNotifier {
       for (final i in injuriesNow)
         if (!i.resolved) i.area,
     };
-    final from = today.subtract(const Duration(days: HunterRules.shadowWindowDays));
+    final from = _addDays(today, -(HunterRules.shadowWindowDays));
     final sets = {for (final m in kMuscles) m.id: 0.0};
     for (final s in fit.sessions) {
       if (s.day.isBefore(from)) continue;
@@ -1904,10 +2040,10 @@ class HunterSystem extends ChangeNotifier {
     // Load.
     final ws = _weekStart(today);
     int setsIn(DateTime start) => fit.sessions
-        .where((s) => !s.day.isBefore(start) && s.day.isBefore(start.add(const Duration(days: 7))))
+        .where((s) => !s.day.isBefore(start) && s.day.isBefore(_addDays(start, 7)))
         .fold(0, (n, s) => n + s.setCount);
     final weekSets = setsIn(ws);
-    final avg = [for (var i = 1; i <= 4; i++) setsIn(ws.subtract(Duration(days: 7 * i)))].fold(0, (a, b) => a + b) / 4;
+    final avg = [for (var i = 1; i <= 4; i++) setsIn(_addDays(ws, -(7 * i)))].fold(0, (a, b) => a + b) / 4;
     final spike = avg > 0 && weekSets > avg * HunterRules.loadSpikeRatio + HunterRules.loadSpikeSlack;
 
     // Briefing: the four daily questions.
@@ -1921,7 +2057,7 @@ class HunterSystem extends ChangeNotifier {
         : shadow != null
         ? 'Your weakest area is ${muscleLabel(shadow.muscle).toLowerCase()}.'
         : 'Pick any quest on the board.';
-    final sleeps = [for (var i = 0; i < 7; i++) ?sleepOn(today.subtract(Duration(days: i)))];
+    final sleeps = [for (var i = 0; i < 7; i++) ?sleepOn(_addDays(today, -(i)))];
     final avgSleep = sleeps.isEmpty ? null : sleeps.reduce((a, b) => a + b) / sleeps.length;
     final recovering = spike
         ? 'Load spike: $weekSets sets this week vs ${avg.toStringAsFixed(0)} average. Hold volume steady.'
@@ -1930,7 +2066,7 @@ class HunterSystem extends ChangeNotifier {
         : 'Sleep averages ${avgSleep.toStringAsFixed(1)} h'
               '${avgSleep >= HunterRules.sleepTargetHours ? '. Recovery looks good.' : '. Aim for 7+.'}';
     final prs30 = facts
-        .where((f) => !f.day.isBefore(today.subtract(const Duration(days: 30))))
+        .where((f) => !f.day.isBefore(_addDays(today, -(30))))
         .fold<int>(0, (a, f) => a + f.prs);
     final working =
         '${_activeDays(ws, facts)} of ${p?.weeklyTarget ?? fit.weeklyTarget} training days this week · '

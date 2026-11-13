@@ -53,7 +53,7 @@ import '../widgets/widget_showcase.dart';
 import 'profile_screen.dart';
 import 'strava_sheet.dart';
 
-const _kRepoUrl = 'https://github.com/InlitX/GymMane';
+const _kRepoUrl = 'https://github.com/IB1203/LevelUp';
 const _kBugUrl = '$_kRepoUrl/issues/new?labels=bug';
 const _kFeatureUrl = '$_kRepoUrl/issues/new?labels=enhancement';
 const _kKofiUrl = 'https://ko-fi.com/inlitx';
@@ -641,6 +641,7 @@ class SettingsScreen extends StatelessWidget {
               if (AutoBackup.instance.supported)
                 (PhosphorIconsRegular.clockCounterClockwise, t.autoBackup, () => showAutoBackupSheet(context)),
               (PhosphorIconsRegular.export, t.stravaRow, () => showStravaSheet(context)),
+              (PhosphorIconsRegular.link, 'Privacy policy', () => _open(context, _kRepoUrl + '/blob/main/PRIVACY.md')),
               (PhosphorIconsRegular.barbell, t.clearWorkouts, () => _clearWorkouts(context)),
               (PhosphorIconsRegular.trash, t.resetData, () => _resetAll(context)),
           ], danger: AutoBackup.instance.supported ? 6 : 5),
@@ -709,7 +710,7 @@ class SettingsScreen extends StatelessWidget {
     return [
       _Category('general', PhosphorIconsRegular.slidersHorizontal, _sectionTitle('general'), [
         (t.theme, PhosphorIconsRegular.moon),
-        (t.languageLabel, PhosphorIconsRegular.translate),
+        if (appLanguages.length > 1) (t.languageLabel, PhosphorIconsRegular.translate),
         (t.unitsLabel, PhosphorIconsRegular.scales),
         (t.weekStartSetting, PhosphorIconsRegular.calendarBlank),
         (t.heatRangeSetting, PhosphorIconsRegular.calendarDots),

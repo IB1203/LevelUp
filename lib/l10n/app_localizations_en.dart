@@ -79,6 +79,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todaysRoutine => 'TODAY\'S ROUTINE';
 
   @override
+  String get hunterSystem => 'HUNTER SYSTEM';
+
+  @override
+  String get registerToBegin => 'Register to begin your journey';
+
+  @override
+  String get rankLabel => 'RANK';
+
+  @override
+  String get levelLabel => 'LVL';
+
+  @override
+  String get xpLabel => 'XP';
+
+  @override
+  String xpProgress(Object into, Object need) {
+    return '$into / $need';
+  }
+
+  @override
+  String get attributes => 'ATTRIBUTES';
+
+  @override
   String get startWorkout => 'START WORKOUT';
 
   @override

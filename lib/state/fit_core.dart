@@ -280,9 +280,15 @@ abstract class FitCore extends ChangeNotifier {
 
   void goHome() => _setRoute('home', reset: true);
 
+  /// The Train tab: the training hub (today's plan, routines, library, history).
+  /// The step-by-step workout picker is the separate pushed `train` route.
+  void goTrain() => _setRoute('training', reset: true);
+
+  void goSystem() => _setRoute('system', reset: true);
+
   void goProgress() => _setRoute('progress', reset: true);
 
-  void goExercises() => _setRoute('exercises', reset: true);
+  void goExercises() => pushRoute('exercises');
 
   void goSettings() => _setRoute('settings', reset: true);
 
@@ -322,7 +328,7 @@ abstract class FitCore extends ChangeNotifier {
 
   int get routeDepth => _routeStack.length;
 
-  bool get showNav => const ['home', 'progress', 'exercises', 'settings'].contains(route);
+  bool get showNav => const ['home', 'training', 'system', 'progress', 'settings'].contains(route);
 
   void setUnits(String u) {
     units = u;

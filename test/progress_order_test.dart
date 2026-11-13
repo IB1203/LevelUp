@@ -6,6 +6,7 @@ import 'package:level_up/models/workout.dart';
 import 'package:level_up/services/local_store.dart';
 import 'package:level_up/services/progress_reminder.dart';
 import 'package:level_up/services/train_reminder.dart';
+import 'package:level_up/services/system_reminder.dart';
 import 'package:level_up/state/fit_state.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,6 +21,7 @@ void main() {
     await Store.instance.init();
     ProgressReminder.instance.enabled = false;
     TrainReminder.instance.enabled = false;
+    SystemReminder.instance.enabled = false;
     fit.resetAllData();
     fit.completeOnboarding();
   });

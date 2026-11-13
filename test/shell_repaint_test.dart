@@ -6,6 +6,7 @@ import 'package:level_up/app/level_up_app.dart';
 import 'package:level_up/l10n/l10n.dart';
 import 'package:level_up/services/local_store.dart';
 import 'package:level_up/services/progress_reminder.dart';
+import 'package:level_up/services/system_reminder.dart';
 import 'package:level_up/state/fit_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,6 +17,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await Store.instance.init();
     ProgressReminder.instance.enabled = false;
+    SystemReminder.instance.enabled = false;
     setAppLanguage('es');
     fit.onboarded = true;
     fit.session = null;

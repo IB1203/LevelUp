@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:level_up/l10n/l10n.dart';
 import 'package:level_up/services/local_store.dart';
 import 'package:level_up/state/fit_state.dart';
+import 'package:level_up/system/system_widgets.dart';
 import 'package:level_up/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -56,6 +57,33 @@ void main() {
     test('action colour flips with the theme but keeps its contrast', () {
       expect(contrast(GymColors.dark.ember, GymColors.dark.onEmber), greaterThan(7));
       expect(contrast(GymColors.light.ember, GymColors.light.onEmber), greaterThan(7));
+    });
+
+    group('hunter accents keep WCAG AA in both themes', () {
+      List<Color> accents(HunterPalette p) => [p.mana, p.violet, p.gold, p.vital, p.alert, p.muted, p.holo];
+
+      test('light accents read on every light surface', () {
+        for (final surface in [GymColors.light.bg, GymColors.light.bgRaised, GymColors.light.bgRaised2]) {
+          for (final c in accents(HunterPalette.light)) {
+            expect(contrast(surface, c), greaterThanOrEqualTo(4.5), reason: '$c on $surface');
+          }
+        }
+      });
+
+      test('dark accents are unchanged and still readable', () {
+        for (final surface in [GymColors.dark.bg, GymColors.dark.bgRaised2]) {
+          for (final c in accents(HunterPalette.dark)) {
+            expect(contrast(surface, c), greaterThanOrEqualTo(4.5), reason: '$c on $surface');
+          }
+        }
+      });
+
+      test('rank letters pick a readable accent in each theme', () {
+        for (final letter in ['E', 'D', 'C', 'B', 'A', 'S']) {
+          expect(contrast(GymColors.light.bg, HunterPalette.light.rank(letter)), greaterThanOrEqualTo(4.5));
+          expect(contrast(GymColors.dark.bg, HunterPalette.dark.rank(letter)), greaterThanOrEqualTo(4.5));
+        }
+      });
     });
   });
 }

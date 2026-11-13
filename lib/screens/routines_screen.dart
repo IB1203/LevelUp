@@ -8,6 +8,8 @@ import '../l10n/l10n.dart';
 import '../models/workout.dart';
 import '../services/plan_pdf.dart';
 import '../state/fit_state.dart';
+import '../system/hunter_catalog.dart';
+import '../system/hunter_engine.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs.dart';
@@ -416,6 +418,9 @@ class RoutinesScreen extends StatelessWidget {
 
   void _openTemplates(BuildContext context) {
     final gc = context.gc;
+    final recommended = hunterClassById(hunter.player?.classId).program;
+    final templates = [...kProgramTemplates]
+      ..sort((a, b) => (a.id == recommended ? 0 : 1).compareTo(b.id == recommended ? 0 : 1));
     showAppSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -433,8 +438,8 @@ class RoutinesScreen extends StatelessWidget {
               const SizedBox(height: 16),
               SheetTitle(t.templates, subtitle: t.templatesHint),
               const SizedBox(height: 16),
-              for (final template in kProgramTemplates)
-                _templateCard(context, gc, sheet, template),
+              for (final template in templates)
+                _templateCard(context, gc, sheet, template, recommended: template.id == recommended),
             ],
           ),
         ),
@@ -443,7 +448,12 @@ class RoutinesScreen extends StatelessWidget {
   }
 
   Widget _templateCard(
-      BuildContext context, GymColors gc, BuildContext sheet, ProgramTemplate template) {
+    BuildContext context,
+    GymColors gc,
+    BuildContext sheet,
+    ProgramTemplate template, {
+    bool recommended = false,
+  }) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -465,16 +475,39 @@ class RoutinesScreen extends StatelessWidget {
             Container(
               width: 42,
               height: 42,
-              decoration: BoxDecoration(color: gc.emberSoft, borderRadius: BorderRadius.circular(12)),
-              child: Icon(PhosphorIconsRegular.stack, size: 20, color: gc.ember),
+              decoration: BoxDecoration(
+                color: recommended ? gc.sageSoft : gc.emberSoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(PhosphorIconsRegular.stack, size: 20, color: recommended ? gc.sage : gc.ember),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(template.name,
-                      style: AppTheme.f(15, weight: FontWeight.w700, color: gc.text, letterSpacing: 0.5)),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(template.name,
+                            style: AppTheme.f(15, weight: FontWeight.w700, color: gc.text, letterSpacing: 0.5)),
+                      ),
+                      if (recommended) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: gc.sage.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: Text(
+                            'YOUR PATH',
+                            style: AppTheme.f(9.5, weight: FontWeight.w800, color: gc.sage, letterSpacing: 0.8),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                   const SizedBox(height: 2),
                   Text(t.templateBlurb(template.id),
                       style: AppTheme.f(12, weight: FontWeight.w500, color: gc.textSecondary, height: 1.35)),

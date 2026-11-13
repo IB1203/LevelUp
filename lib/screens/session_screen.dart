@@ -1899,12 +1899,13 @@ class SessionScreen extends StatelessWidget {
               width: 34,
               height: 44,
               child: Center(
+                // Fills the whole 34 × 44 touch area's width so it is easy to hit mid-set.
                 child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(8)),
+                  width: 34,
+                  height: 36,
+                  decoration: BoxDecoration(color: gc.bgRaised2, borderRadius: BorderRadius.circular(10)),
                   alignment: Alignment.center,
-                  child: Text(g, style: TextStyle(color: gc.text, fontSize: 17, height: 1)),
+                  child: Text(g, style: TextStyle(color: gc.text, fontSize: 19, height: 1)),
                 ),
               ),
             ),
