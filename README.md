@@ -4,9 +4,7 @@ An offline, privacy-first training system for Android and iOS, built with
 Flutter. You are the hunter, training is the dungeon, and progress is the
 level-up system.
 
-**Level Up is based on [GymMane](https://github.com/InlitX/GymMane) by InlitX**
-and is a modified version of it (see "Licence" below). GymMane supplies the
-training core; Level Up adds the "System" game layer and a new look.
+** Level Up adds the "System" game layer and a new look.
 
 ## Run it
 
